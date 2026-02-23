@@ -1,0 +1,81 @@
+{
+  "name": "brv-text-editor",
+  "version": "1.0.0",
+  "description": "A fully-functional React rich text editor and preview component inspired by Basecamp 3",
+  "author": "Vishal Shukla",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/brv-text-editor.umd.js",
+  "module": "./dist/brv-text-editor.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/brv-text-editor.es.js",
+      "require": "./dist/brv-text-editor.umd.js"
+    },
+    "./dist/brv-text-editor.css": "./dist/brv-text-editor.css"
+  },
+  "style": "./dist/brv-text-editor.css",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "keywords": [
+    "rich-text-editor",
+    "tiptap",
+    "react",
+    "wysiwyg",
+    "basecamp",
+    "prosemirror"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:lib": "vite build --config vite.lib.config.js",
+    "preview": "vite preview"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "dependencies": {
+    "@tiptap/core": "^2.10.4",
+    "@tiptap/extension-blockquote": "^2.10.4",
+    "@tiptap/extension-bold": "^2.10.4",
+    "@tiptap/extension-bullet-list": "^2.10.4",
+    "@tiptap/extension-code": "^2.10.4",
+    "@tiptap/extension-code-block": "^2.10.4",
+    "@tiptap/extension-color": "^2.10.4",
+    "@tiptap/extension-document": "^2.10.4",
+    "@tiptap/extension-hard-break": "^2.10.4",
+    "@tiptap/extension-heading": "^2.10.4",
+    "@tiptap/extension-history": "^2.10.4",
+    "@tiptap/extension-horizontal-rule": "^2.10.4",
+    "@tiptap/extension-image": "^2.10.4",
+    "@tiptap/extension-italic": "^2.10.4",
+    "@tiptap/extension-link": "^2.10.4",
+    "@tiptap/extension-list-item": "^2.10.4",
+    "@tiptap/extension-ordered-list": "^2.10.4",
+    "@tiptap/extension-paragraph": "^2.10.4",
+    "@tiptap/extension-placeholder": "^2.10.4",
+    "@tiptap/extension-strike": "^2.10.4",
+    "@tiptap/extension-task-item": "^2.10.4",
+    "@tiptap/extension-task-list": "^2.10.4",
+    "@tiptap/extension-text": "^2.10.4",
+    "@tiptap/extension-text-align": "^2.10.4",
+    "@tiptap/extension-text-style": "^2.10.4",
+    "@tiptap/extension-underline": "^2.10.4",
+    "@tiptap/react": "^2.10.4",
+    "lucide-react": "^0.468.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^6.0.5"
+  }
+}

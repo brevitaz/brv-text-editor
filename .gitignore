@@ -1,0 +1,9 @@
+node_modules/
+demo-dist/
+
+# Uncomment the next line if you publish to a private npm registry (don't commit dist/).
+# For the Git-dependency workflow (Option B in README), dist/ MUST stay committed.
+# dist/
+
+*.local
+.DS_Store
