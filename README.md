@@ -1,7 +1,10 @@
-# brv-text-editor
+# @brevitaz/brv-text-editor
 
-A fully-functional React rich text editor and preview component inspired by Basecamp 3.
-Built on [Tiptap](https://tiptap.dev/) (ProseMirror) + [Lucide React](https://lucide.dev/) icons.
+A fully-featured React rich text editor and preview component built on [Tiptap](https://tiptap.dev/) (ProseMirror) + [Lucide React](https://lucide.dev/) icons.
+
+![Editor](https://raw.githubusercontent.com/brevitaz/react-rich-text-editor/main/screenshots/editor.png)
+
+![Preview](https://raw.githubusercontent.com/brevitaz/react-rich-text-editor/main/screenshots/preview.png)
 
 ---
 
@@ -13,21 +16,24 @@ Built on [Tiptap](https://tiptap.dev/) (ProseMirror) + [Lucide React](https://lu
 | **Headings** | H1, H2, H3 via dropdown |
 | **Lists** | Bullet, numbered, task (checkbox) lists |
 | **Blocks** | Blockquote, fenced code block, horizontal rule |
+| **Callouts** | 6 themed callout blocks — Info, Success, Warning, Danger, Tip, Note |
 | **Alignment** | Left, center, right text alignment |
 | **Media** | Insert links (with edit/remove popover) and images by URL |
-| **History** | Undo / Redo (⌘Z / ⌘⇧Z) |
+| **History** | Undo / Redo |
+| **Configurable toolbar** | Enable/disable toolbar groups via the `toolbar` prop |
 | **Word count** | Live character and word count in the footer |
-| **Preview** | `RichTextPreview` renders saved HTML in a Basecamp-style card with tabbed source view and emoji reactions |
+| **Theming** | Built-in presets + full CSS variable customisation via `createTheme()` |
+| **Preview** | `RichTextPreview` renders saved HTML in a styled card with emoji reactions |
 
 ---
 
 ## Installation
 
 ```bash
-npm install brv-text-editor
+npm install @brevitaz/brv-text-editor
 ```
 
-> **Peer dependencies** – React 18+ must already be installed in your project.
+> **Peer dependencies** — React 19 must already be installed in your project.
 > `react` and `react-dom` are **not** bundled inside the package.
 
 ```bash
@@ -43,13 +49,13 @@ npm install react react-dom
 
 ```js
 // main.jsx / main.tsx / _app.jsx
-import 'brv-text-editor/dist/brv-text-editor.css'
+import '@brevitaz/brv-text-editor/dist/brv-text-editor.css'
 ```
 
 ### 2. Use the editor
 
 ```jsx
-import { RichTextEditor } from 'brv-text-editor'
+import { RichTextEditor } from '@brevitaz/brv-text-editor'
 
 function MyPage() {
   const handleSave = (html) => {
@@ -72,16 +78,14 @@ function MyPage() {
 
 ```jsx
 import { useState } from 'react'
-import { RichTextEditor, RichTextPreview } from 'brv-text-editor'
-
-const AUTHOR = { name: 'Jane Doe', initials: 'JD', avatarColor: '#1a6b3c' }
+import { RichTextEditor, RichTextPreview } from '@brevitaz/brv-text-editor'
 
 function NotesPage() {
   const [notes, setNotes] = useState([])
 
   const handleSave = (html) => {
     setNotes(prev => [
-      { id: Date.now(), html, timestamp: new Date().toLocaleString() },
+      { id: Date.now(), html },
       ...prev,
     ])
   }
@@ -91,13 +95,7 @@ function NotesPage() {
       <RichTextEditor onSubmit={handleSave} submitLabel="Post" showActions />
 
       {notes.map(note => (
-        <RichTextPreview
-          key={note.id}
-          html={note.html}
-          author={AUTHOR}
-          timestamp={note.timestamp}
-          onDismiss={() => setNotes(n => n.filter(x => x.id !== note.id))}
-        />
+        <RichTextPreview key={note.id} html={note.html} />
       ))}
     </>
   )
@@ -121,190 +119,124 @@ function NotesPage() {
 | `showActions` | `boolean` | `true` | Whether to show the footer Save/Cancel bar |
 | `minHeight` | `number` | `140` | Minimum editor height in pixels |
 | `autofocus` | `boolean` | `false` | Whether to focus the editor on mount |
+| `toolbar` | `object` | `DEFAULT_TOOLBAR` | Toggle toolbar groups (see below) |
+| `theme` | `string` | `'unleashteams'` | Built-in theme preset |
+| `themeVars` | `object` | `{}` | CSS variable overrides for custom theming |
+| `className` | `string` | `''` | Additional class for the root wrapper |
+
+#### Toolbar groups
+
+The `toolbar` prop accepts a partial object. Omitted keys default to `true`.
+
+```jsx
+// Show only formatting and callouts
+<RichTextEditor toolbar={{ headings: false, alignment: false, lists: false, blocks: false, media: false, history: false }} />
+
+// Hide callouts only
+<RichTextEditor toolbar={{ callouts: false }} />
+```
+
+| Group | Controls |
+|---|---|
+| `headings` | H1 / H2 / H3 dropdown |
+| `formatting` | Bold, italic, underline, strikethrough, inline code |
+| `alignment` | Left, center, right text alignment |
+| `lists` | Bullet, numbered, task lists |
+| `blocks` | Blockquote, code block, horizontal rule |
+| `callouts` | Callout block dropdown (info, success, warning, danger, tip, note) |
+| `media` | Link and image insert |
+| `history` | Undo / redo |
+
+#### Callout blocks
+
+Six themed callout variants are available via the callout dropdown button in the toolbar. Each callout renders as a colored left-bordered block:
+
+| Type | Color | Use case |
+|---|---|---|
+| `info` | Blue | General information |
+| `success` | Green | Positive outcomes |
+| `warning` | Amber | Caution / attention |
+| `danger` | Red | Critical / breaking |
+| `tip` | Purple | Helpful hints |
+| `note` | Gray | Supplementary notes |
+
+Callouts are stored as `<div data-callout="type">` in the HTML output, so they render correctly in `RichTextPreview` as well.
 
 ### `<RichTextPreview />`
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `html` | `string` | `''` | Raw HTML string to render |
-| `author` | `{ name, initials, avatarColor? }` | `{ name:'Anonymous', initials:'A' }` | Author info shown in the card header |
-| `timestamp` | `string` | `''` | Human-readable timestamp string |
-| `onDismiss` | `() => void` | — | If provided, shows a × button to remove the card |
 | `showReactions` | `boolean` | `true` | Whether to show the emoji reactions row |
 | `reactions` | `string[]` | `['👍','❤️','🎉','🙌']` | Emoji list for the reactions row |
+| `theme` | `string` | `'unleashteams'` | Built-in theme preset |
+| `themeVars` | `object` | `{}` | CSS variable overrides for custom theming |
 
 ---
 
-## Publishing for your company
+## Theming
 
-You have two options: a **private npm registry** (recommended) or a **direct Git dependency**.
+Every color, font, border, and spacing value is driven by a CSS custom property. Override them at any scope.
 
----
-
-### Option A — Private npm registry (recommended)
-
-This is the cleanest approach. Developers run a single `npm install` and get the package like any other.
-
-#### Step 1 — Set up a registry
-
-Choose one:
-
-| Option | Notes |
-|---|---|
-| **GitHub Packages** | Free for private repos; scoped package (`@your-org/brv-text-editor`). Good if you already use GitHub. |
-| **npm private registry** | Paid; works with unscoped names. |
-| **Verdaccio** (self-hosted) | Free, runs on your own server/container. Full npm protocol compatible. |
-| **AWS CodeArtifact / JFrog** | Enterprise options; cost depends on usage. |
-
-#### Step 2 — Scope the package (recommended for private registries)
-
-In `package.json`, rename to a scoped name:
-
-```json
-{
-  "name": "@your-org/brv-text-editor"
-}
-```
-
-This prevents name collisions with the public registry.
-
-#### Step 3 — Authenticate and publish
-
-**GitHub Packages example:**
-
-```bash
-# 1. Create a Personal Access Token (PAT) with write:packages scope on GitHub
-
-# 2. Login to the GitHub registry
-npm login --registry=https://npm.pkg.github.com --scope=@your-org
-
-# 3. Build the library
-npm run build:lib
-
-# 4. Publish
-npm publish --registry=https://npm.pkg.github.com
-```
-
-**Verdaccio example:**
-
-```bash
-# 1. Start Verdaccio (or point to your hosted instance)
-npx verdaccio   # → http://localhost:4873
-
-# 2. Create an account (first time only)
-npm adduser --registry http://localhost:4873
-
-# 3. Build and publish
-npm run build:lib
-npm publish --registry http://localhost:4873
-```
-
-#### Step 4 — Configure developers' machines
-
-Developers need to tell npm where to find your scoped packages.
-Create or update `.npmrc` in their project (or the monorepo root):
-
-```ini
-# .npmrc – checked into source control
-@your-org:registry=https://npm.pkg.github.com
-# or for Verdaccio:
-# @your-org:registry=http://your-verdaccio-host:4873
-```
-
-They also need to authenticate once:
-
-```bash
-npm login --registry=https://npm.pkg.github.com --scope=@your-org
-```
-
-For CI/CD, use an automation token stored as a secret:
-
-```ini
-# .npmrc in CI environment
-//npm.pkg.github.com/:_authToken=${NPM_TOKEN}
-@your-org:registry=https://npm.pkg.github.com
-```
-
-#### Step 5 — Developers install and use it
-
-```bash
-npm install @your-org/brv-text-editor
-```
+### Built-in presets
 
 ```jsx
-import '@your-org/brv-text-editor/dist/brv-text-editor.css'
-import { RichTextEditor, RichTextPreview } from '@your-org/brv-text-editor'
+<RichTextEditor theme="classic" />
 ```
 
-#### Step 6 — Publishing updates
+### Custom overrides via props
 
-```bash
-# Bump the version (choose: patch | minor | major)
-npm version patch
-
-# Rebuild and publish
-npm run build:lib && npm publish --registry <your-registry-url>
+```jsx
+<RichTextEditor themeVars={{ '--rte-color-primary': '#7c3aed' }} />
 ```
 
-Use semantic versioning:
-- `patch` (1.0.1) — bug fixes
-- `minor` (1.1.0) — new features, backwards-compatible
-- `major` (2.0.0) — breaking changes
+### Using `createTheme()`
+
+```jsx
+import { RichTextEditor, createTheme } from '@brevitaz/brv-text-editor'
+
+const myTheme = createTheme({
+  '--rte-color-primary':       '#7c3aed',
+  '--rte-btn-active-bg':       '#ede9fe',
+  '--rte-btn-active-color':    '#7c3aed',
+  '--rte-color-primary-hover': '#faf5ff',
+  '--rte-focus-border':        '#a78bfa',
+  '--rte-focus-ring':          'rgba(124, 58, 237, 0.18)',
+  '--rte-blockquote-border':   '#a78bfa',
+  '--rte-checkbox-accent':     '#7c3aed',
+  '--rte-selection-bg':        '#ede9fe',
+})
+
+<RichTextEditor themeVars={myTheme} />
+```
+
+### Available CSS variables
+
+| Variable | Description |
+|---|---|
+| `--rte-color-primary` | Primary action color |
+| `--rte-color-primary-hover` | Primary hover state |
+| `--rte-btn-active-bg` / `--rte-btn-active-color` | Active button styling |
+| `--rte-surface` / `--rte-surface-toolbar` | Background colors |
+| `--rte-border` / `--rte-border-toolbar` | Border colors |
+| `--rte-text` / `--rte-text-muted` / `--rte-text-placeholder` | Text colors |
+| `--rte-code-bg` / `--rte-code-color` | Code styling |
+| `--rte-blockquote-border` / `--rte-blockquote-color` | Blockquote styling |
+| `--rte-checkbox-accent` | Task list checkbox color |
+| `--rte-focus-border` / `--rte-focus-ring` | Focus states |
+| `--rte-font-family` | Font stack |
+| `--rte-radius` / `--rte-radius-sm` / `--rte-radius-lg` | Border radii |
 
 ---
 
-### Option B — Git dependency (no registry needed)
-
-If you just want to share quickly within your organization without setting up a registry, push the repo to your internal Git host and developers install directly from Git:
+## Local development
 
 ```bash
-npm install git+https://github.com/your-org/brv-text-editor.git
-# or SSH:
-npm install git+ssh://git@github.com/your-org/brv-text-editor.git
-```
+# Start the demo app
+npm run dev
 
-**Important:** The `dist/` folder must be committed to the repo for this to work, because npm won't run `build:lib` automatically on install.
-
-```bash
-# Before pushing for the first time (and after each release):
+# Build the distributable library
 npm run build:lib
-git add dist/
-git commit -m "chore: rebuild dist for v1.0.x"
-git push
-```
-
-To pin to a specific version, use a tag:
-
-```bash
-# Tag a release
-git tag v1.0.1
-git push origin v1.0.1
-
-# Install that exact tag
-npm install git+https://github.com/your-org/brv-text-editor.git#v1.0.1
-```
-
----
-
-## Local development / testing the library
-
-```bash
-# In this repo — build the library and create a local link
-npm run build:lib
-npm link
-
-# In your consumer app's folder
-npm link brv-text-editor   # or @your-org/brv-text-editor
-```
-
-Or use `npm pack` to simulate exactly what gets published:
-
-```bash
-npm pack
-# → brv-text-editor-1.0.0.tgz
-
-# In your consumer app:
-npm install /path/to/brv-text-editor-1.0.0.tgz
 ```
 
 ---
@@ -313,16 +245,18 @@ npm install /path/to/brv-text-editor-1.0.0.tgz
 
 ```
 rich-text-editor/
-├── dist/                         ← Library output (git-ignored for private registry flow)
+├── dist/                         ← Library output
 │   ├── brv-text-editor.es.js     ← ES module bundle
 │   ├── brv-text-editor.umd.js    ← UMD/CJS bundle
 │   └── brv-text-editor.css       ← Extracted stylesheet
 ├── src/
 │   ├── index.js                  ← Library entry (exports both components)
-│   ├── index.css                 ← All styles (ProseMirror + preview)
+│   ├── index.css                 ← All styles (editor + preview)
 │   ├── components/
 │   │   ├── RichTextEditor.jsx    ← Editor component
 │   │   └── RichTextPreview.jsx   ← Preview card component
+│   ├── extensions/
+│   │   └── Callout.js            ← Custom callout block extension
 │   ├── App.jsx                   ← Demo application
 │   └── main.jsx                  ← Demo entry point
 ├── vite.config.js                ← Demo app Vite config
@@ -338,11 +272,11 @@ rich-text-editor/
 |---|---|
 | `npm run dev` | Start the demo app dev server |
 | `npm run build` | Build the demo app |
-| `npm run build:lib` | Build the distributable library → `dist/` |
+| `npm run build:lib` | Build the distributable library into `dist/` |
 | `npm run preview` | Preview the built demo app |
 
 ---
 
 ## License
 
-MIT
+MIT — [Brevitaz Systems](https://brevitaz.com)

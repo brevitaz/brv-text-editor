@@ -1,144 +1,317 @@
-*, *::before, *::after {
+/* Scoped reset — only affects the editor component, not the host application */
+.rte-root,
+.rte-root *,
+.rte-root *::before,
+.rte-root *::after {
   box-sizing: border-box;
 }
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  background: #f5f4ef;
-  color: #1d1d1f;
-  -webkit-font-smoothing: antialiased;
+/* ─── Design Tokens ─────────────────────────────────────────────────────────
+ *
+ * All visual values in RichTextEditor and RichTextPreview are driven by these
+ * CSS custom properties.  To create a custom theme you have two options:
+ *
+ *  1. CSS override (recommended for design systems):
+ *     .my-app .rte-root { --rte-color-primary: #7c3aed; }
+ *
+ *  2. Inline themeVars prop (recommended for per-instance overrides):
+ *     <RichTextEditor themeVars={{ '--rte-color-primary': '#7c3aed' }} />
+ *
+ *  3. Named preset via theme prop:
+ *     <RichTextEditor theme="classic" />
+ *
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* Default theme — Teal palette */
+.rte-root {
+  /* ── Brand ───────────────────────────────────────────── */
+  --rte-color-primary:        #065666;   /* primary CTA / active icon color   */
+  --rte-color-primary-hover:  #f0fbff;   /* very light teal hover background  */
+  --rte-btn-active-bg:        #c4f1f9;   /* active toolbar button background  */
+  --rte-btn-active-color:     #065666;   /* active toolbar button icon/text   */
+  --rte-color-link:           #0a66b7;   /* hyperlink color                   */
+
+  /* ── Surface ─────────────────────────────────────────── */
+  --rte-surface:              #ffffff;
+  --rte-surface-toolbar:      #ffffff;
+  --rte-surface-subtle:       #f7fafc;   /* code blocks, pre, alt rows        */
+
+  /* ── Border ──────────────────────────────────────────── */
+  --rte-border:               #cbd5e0;   /* main wrapper border               */
+  --rte-border-toolbar:       #e2e8f0;   /* toolbar bottom / footer top       */
+  --rte-border-subtle:        #e2e8f0;   /* divider between toolbar groups    */
+
+  /* ── Text ────────────────────────────────────────────── */
+  --rte-text:                 #1a202c;
+  --rte-text-muted:           #718096;
+  --rte-text-placeholder:     #a0aec0;
+
+  /* ── Toolbar buttons ─────────────────────────────────── */
+  --rte-btn-hover-bg:         #f7fafc;
+  --rte-btn-disabled-color:   #cbd5e0;
+
+  /* ── Focus ring ──────────────────────────────────────── */
+  --rte-focus-border:         #6eb8d4;
+  --rte-focus-ring:           rgba(6, 86, 102, 0.18);
+
+  /* ── Content ─────────────────────────────────────────── */
+  --rte-code-bg:              #edf2f7;
+  --rte-code-color:           #c53030;
+  --rte-blockquote-border:    #6eb8d4;
+  --rte-blockquote-color:     #718096;
+  --rte-selection-bg:         #c4f1f9;
+  --rte-checkbox-accent:      #065666;
+  --rte-hr-color:             #e2e8f0;
+
+  /* ── Typography ──────────────────────────────────────── */
+  --rte-font-family:          'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --rte-font-size:            14px;
+  --rte-line-height:          1.65;
+
+  /* ── Shape ───────────────────────────────────────────── */
+  --rte-radius:               6px;
+  --rte-radius-sm:            4px;
+  --rte-radius-lg:            8px;
+
+  /* ── Shadow ──────────────────────────────────────────── */
+  --rte-dropdown-shadow:      0 4px 20px rgba(0, 0, 0, 0.1), 0 1px 4px rgba(0, 0, 0, 0.06);
+
+  /* Apply font to component root */
+  font-family: var(--rte-font-family);
+  font-size: var(--rte-font-size);
 }
 
-/* Tiptap editor base styles */
-.ProseMirror {
+
+/* ─── Classic theme preset (warm earthy palette) ─────────────────────────── */
+.rte-root[data-rte-theme="classic"] {
+  --rte-color-primary:        #1a6b3c;
+  --rte-color-primary-hover:  #f0fdf4;
+  --rte-btn-active-bg:        #e0ddd8;
+  --rte-btn-active-color:     #1d1d1f;
+  --rte-color-link:           #1569c7;
+
+  --rte-surface-toolbar:      #faf9f7;
+  --rte-surface-subtle:       #f0ede8;
+
+  --rte-border:               #d8d5d0;
+  --rte-border-toolbar:       #eceae6;
+  --rte-border-subtle:        #ddd9d4;
+
+  --rte-text:                 #1d1d1f;
+  --rte-text-muted:           #888888;
+  --rte-text-placeholder:     #aaaaaa;
+
+  --rte-btn-hover-bg:         #eceae6;
+  --rte-btn-disabled-color:   #c5c2bc;
+
+  --rte-focus-border:         #aac8f5;
+  --rte-focus-ring:           rgba(90, 156, 248, 0.18);
+
+  --rte-code-bg:              #f0ede8;
+  --rte-code-color:           #d04a4a;
+  --rte-blockquote-border:    #c2c2bf;
+  --rte-blockquote-color:     #6a6a6a;
+  --rte-selection-bg:         #b3d4fc;
+  --rte-checkbox-accent:      #1a6b3c;
+  --rte-hr-color:             #e8e5e0;
+
+  --rte-font-family:          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+
+
+/* ─── Tiptap / ProseMirror editor content ───────────────────────────────── */
+
+.rte-root .ProseMirror {
   outline: none;
   min-height: 120px;
-  padding: 12px 14px;
-  font-size: 15px;
-  line-height: 1.55;
-  color: #1d1d1f;
+  padding: 12px 16px;
+  font-size: var(--rte-font-size);
+  font-family: var(--rte-font-family);
+  line-height: var(--rte-line-height);
+  color: var(--rte-text);
 }
 
-.ProseMirror p {
+.rte-root .ProseMirror p {
   margin: 0 0 0.5em 0;
 }
 
-.ProseMirror p:last-child {
+.rte-root .ProseMirror p:last-child {
   margin-bottom: 0;
 }
 
-.ProseMirror h1, .ProseMirror h2, .ProseMirror h3 {
+.rte-root .ProseMirror h1,
+.rte-root .ProseMirror h2,
+.rte-root .ProseMirror h3 {
   font-weight: 700;
   margin: 0.75em 0 0.3em;
   line-height: 1.25;
-  color: #1d1d1f;
+  color: var(--rte-text);
 }
 
-.ProseMirror h1 { font-size: 1.5em; }
-.ProseMirror h2 { font-size: 1.25em; }
-.ProseMirror h3 { font-size: 1.1em; }
+.rte-root .ProseMirror h1 { font-size: 1.5em; }
+.rte-root .ProseMirror h2 { font-size: 1.25em; }
+.rte-root .ProseMirror h3 { font-size: 1.1em; }
 
-.ProseMirror ul,
-.ProseMirror ol {
+.rte-root .ProseMirror ul,
+.rte-root .ProseMirror ol {
   padding-left: 1.4em;
   margin: 0.4em 0;
 }
 
-.ProseMirror li {
+.rte-root .ProseMirror li {
   margin: 0.15em 0;
 }
 
-.ProseMirror li p {
+.rte-root .ProseMirror li p {
   margin: 0;
 }
 
-.ProseMirror blockquote {
-  border-left: 3px solid #c2c2bf;
+.rte-root .ProseMirror blockquote {
+  border-left: 3px solid var(--rte-blockquote-border);
   padding-left: 1em;
   margin: 0.5em 0;
-  color: #6a6a6a;
+  color: var(--rte-blockquote-color);
   font-style: italic;
 }
 
-.ProseMirror code {
-  background: #f0ede8;
+.rte-root .ProseMirror code {
+  background: var(--rte-code-bg);
   border-radius: 3px;
-  padding: 0.1em 0.3em;
+  padding: 0.1em 0.35em;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 0.875em;
-  color: #d04a4a;
+  color: var(--rte-code-color);
 }
 
-.ProseMirror pre {
-  background: #f0ede8;
-  border-radius: 6px;
+.rte-root .ProseMirror pre {
+  background: var(--rte-code-bg);
+  border-radius: var(--rte-radius);
   padding: 0.75em 1em;
   margin: 0.5em 0;
   overflow-x: auto;
 }
 
-.ProseMirror pre code {
+.rte-root .ProseMirror pre code {
   background: none;
   padding: 0;
-  color: #1d1d1f;
+  color: var(--rte-text);
   font-size: 0.875em;
 }
 
-.ProseMirror a {
-  color: #1569c7;
+.rte-root .ProseMirror a {
+  color: var(--rte-color-link);
   text-decoration: underline;
   cursor: pointer;
 }
 
-.ProseMirror hr {
+.rte-root .ProseMirror hr {
   border: none;
-  border-top: 2px solid #e8e5e0;
+  border-top: 2px solid var(--rte-hr-color);
   margin: 1em 0;
 }
 
-.ProseMirror img {
+.rte-root .ProseMirror img {
   max-width: 100%;
   height: auto;
-  border-radius: 4px;
+  border-radius: var(--rte-radius-sm);
 }
 
 /* Task list */
-.ProseMirror ul[data-type="taskList"] {
+.rte-root .ProseMirror ul[data-type="taskList"] {
   list-style: none;
   padding-left: 0.25em;
 }
 
-.ProseMirror ul[data-type="taskList"] li {
+.rte-root .ProseMirror ul[data-type="taskList"] li {
   display: flex;
   align-items: flex-start;
   gap: 0.5em;
 }
 
-.ProseMirror ul[data-type="taskList"] li > label {
+.rte-root .ProseMirror ul[data-type="taskList"] li > label {
   flex-shrink: 0;
   margin-top: 3px;
 }
 
-.ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
+.rte-root .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"] {
   width: 15px;
   height: 15px;
   cursor: pointer;
-  accent-color: #1a6b3c;
+  accent-color: var(--rte-checkbox-accent);
 }
 
-.ProseMirror ul[data-type="taskList"] li > div {
+.rte-root .ProseMirror ul[data-type="taskList"] li > div {
   flex: 1;
 }
 
-.ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
+.rte-root .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
   text-decoration: line-through;
-  color: #999;
+  color: var(--rte-text-muted);
 }
 
+/* ─── Callout blocks ────────────────────────────────────────────────────── */
+
+.rte-root .ProseMirror .rte-callout,
+.rte-root .rtp-content .rte-callout {
+  border-left: 4px solid var(--_callout-color, #64748b);
+  background: var(--_callout-bg, #f8fafc);
+  border-radius: 0 var(--rte-radius) var(--rte-radius) 0;
+  padding: 12px 16px;
+  margin: 0.5em 0;
+  position: relative;
+}
+
+.rte-root .ProseMirror .rte-callout p:last-child,
+.rte-root .rtp-content .rte-callout p:last-child {
+  margin-bottom: 0;
+}
+
+/* Info — blue */
+.rte-root .ProseMirror .rte-callout--info,
+.rte-root .rtp-content .rte-callout--info {
+  --_callout-color: #2563eb;
+  --_callout-bg:    #eff6ff;
+}
+
+/* Success — green */
+.rte-root .ProseMirror .rte-callout--success,
+.rte-root .rtp-content .rte-callout--success {
+  --_callout-color: #16a34a;
+  --_callout-bg:    #f0fdf4;
+}
+
+/* Warning — amber */
+.rte-root .ProseMirror .rte-callout--warning,
+.rte-root .rtp-content .rte-callout--warning {
+  --_callout-color: #d97706;
+  --_callout-bg:    #fffbeb;
+}
+
+/* Danger — red */
+.rte-root .ProseMirror .rte-callout--danger,
+.rte-root .rtp-content .rte-callout--danger {
+  --_callout-color: #dc2626;
+  --_callout-bg:    #fef2f2;
+}
+
+/* Tip — purple */
+.rte-root .ProseMirror .rte-callout--tip,
+.rte-root .rtp-content .rte-callout--tip {
+  --_callout-color: #7c3aed;
+  --_callout-bg:    #faf5ff;
+}
+
+/* Note — gray */
+.rte-root .ProseMirror .rte-callout--note,
+.rte-root .rtp-content .rte-callout--note {
+  --_callout-color: #64748b;
+  --_callout-bg:    #f8fafc;
+}
+
+
 /* Placeholder */
-.ProseMirror p.is-editor-empty:first-child::before {
-  color: #aaa;
+.rte-root .ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--rte-text-placeholder);
   content: attr(data-placeholder);
   float: left;
   height: 0;
@@ -146,125 +319,133 @@ body {
 }
 
 /* Selection */
-.ProseMirror ::selection {
-  background: #b3d4fc;
+.rte-root .ProseMirror ::selection {
+  background: var(--rte-selection-bg);
 }
 
 /* Focus ring */
-.editor-wrapper:focus-within {
-  border-color: #aac8f5 !important;
-  box-shadow: 0 0 0 3px rgba(90, 156, 248, 0.18);
+.rte-root.editor-wrapper:focus-within {
+  border-color: var(--rte-focus-border) !important;
+  box-shadow: 0 0 0 3px var(--rte-focus-ring);
 }
 
 /* Tooltip hover */
-.tooltip-wrapper:hover .tooltip-label {
+.rte-root .tooltip-wrapper:hover .tooltip-label {
   opacity: 1 !important;
 }
 
-/* ─── RichTextPreview (rtp-*) ─────────────────────────────────────────────── */
+
+/* ─── RichTextPreview (rtp-*) ────────────────────────────────────────────── */
 
 @keyframes rtp-slideDown {
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.rtp-content h1,
-.rtp-content h2,
-.rtp-content h3 {
+.rte-root .rtp-content {
+  font-family: var(--rte-font-family);
+  font-size: var(--rte-font-size);
+  line-height: var(--rte-line-height);
+  color: var(--rte-text);
+}
+
+.rte-root .rtp-content h1,
+.rte-root .rtp-content h2,
+.rte-root .rtp-content h3 {
   font-weight: 700;
   margin: 0.6em 0 0.25em;
   line-height: 1.25;
-  color: #1d1d1f;
+  color: var(--rte-text);
 }
-.rtp-content h1 { font-size: 1.5em; }
-.rtp-content h2 { font-size: 1.25em; }
-.rtp-content h3 { font-size: 1.1em; }
+.rte-root .rtp-content h1 { font-size: 1.5em; }
+.rte-root .rtp-content h2 { font-size: 1.25em; }
+.rte-root .rtp-content h3 { font-size: 1.1em; }
 
-.rtp-content p {
+.rte-root .rtp-content p {
   margin: 0 0 0.5em;
 }
-.rtp-content p:last-child { margin-bottom: 0; }
+.rte-root .rtp-content p:last-child { margin-bottom: 0; }
 
-.rtp-content ul,
-.rtp-content ol {
+.rte-root .rtp-content ul,
+.rte-root .rtp-content ol {
   padding-left: 1.4em;
   margin: 0.4em 0;
 }
-.rtp-content li { margin: 0.15em 0; }
-.rtp-content li p { margin: 0; }
+.rte-root .rtp-content li { margin: 0.15em 0; }
+.rte-root .rtp-content li p { margin: 0; }
 
-.rtp-content blockquote {
-  border-left: 3px solid #c2c2bf;
+.rte-root .rtp-content blockquote {
+  border-left: 3px solid var(--rte-blockquote-border);
   padding-left: 1em;
   margin: 0.5em 0;
-  color: #6a6a6a;
+  color: var(--rte-blockquote-color);
   font-style: italic;
 }
 
-.rtp-content code {
-  background: #f0ede8;
+.rte-root .rtp-content code {
+  background: var(--rte-code-bg);
   border-radius: 3px;
-  padding: 0.1em 0.3em;
+  padding: 0.1em 0.35em;
   font-family: 'SFMono-Regular', Consolas, monospace;
   font-size: 0.875em;
-  color: #d04a4a;
+  color: var(--rte-code-color);
 }
 
-.rtp-content pre {
-  background: #f0ede8;
-  border-radius: 6px;
+.rte-root .rtp-content pre {
+  background: var(--rte-code-bg);
+  border-radius: var(--rte-radius);
   padding: 0.75em 1em;
   margin: 0.5em 0;
   overflow-x: auto;
 }
-.rtp-content pre code {
+.rte-root .rtp-content pre code {
   background: none;
   padding: 0;
-  color: #1d1d1f;
+  color: var(--rte-text);
 }
 
-.rtp-content a {
-  color: #1569c7;
+.rte-root .rtp-content a {
+  color: var(--rte-color-link);
   text-decoration: underline;
 }
 
-.rtp-content hr {
+.rte-root .rtp-content hr {
   border: none;
-  border-top: 2px solid #e8e5e0;
+  border-top: 2px solid var(--rte-hr-color);
   margin: 1em 0;
 }
 
-.rtp-content img {
+.rte-root .rtp-content img {
   max-width: 100%;
   height: auto;
-  border-radius: 4px;
+  border-radius: var(--rte-radius-sm);
 }
 
 /* Task list in preview */
-.rtp-content ul[data-type="taskList"] {
+.rte-root .rtp-content ul[data-type="taskList"] {
   list-style: none;
   padding-left: 0.25em;
 }
-.rtp-content ul[data-type="taskList"] li {
+.rte-root .rtp-content ul[data-type="taskList"] li {
   display: flex;
   align-items: flex-start;
   gap: 0.5em;
 }
-.rtp-content ul[data-type="taskList"] li label {
+.rte-root .rtp-content ul[data-type="taskList"] li label {
   flex-shrink: 0;
   margin-top: 3px;
 }
-.rtp-content ul[data-type="taskList"] li input[type="checkbox"] {
+.rte-root .rtp-content ul[data-type="taskList"] li input[type="checkbox"] {
   width: 15px;
   height: 15px;
-  accent-color: #1a6b3c;
+  accent-color: var(--rte-checkbox-accent);
 }
-.rtp-content ul[data-type="taskList"] li[data-checked="true"] > div {
+.rte-root .rtp-content ul[data-type="taskList"] li[data-checked="true"] > div {
   text-decoration: line-through;
-  color: #999;
+  color: var(--rte-text-muted);
 }
 
 /* Text alignment */
-.rtp-content [style*="text-align: center"] { text-align: center; }
-.rtp-content [style*="text-align: right"]  { text-align: right; }
-.rtp-content [style*="text-align: left"]   { text-align: left; }
+.rte-root .rtp-content [style*="text-align: center"] { text-align: center; }
+.rte-root .rtp-content [style*="text-align: right"]  { text-align: right; }
+.rte-root .rtp-content [style*="text-align: left"]   { text-align: left; }
