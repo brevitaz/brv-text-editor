@@ -2,9 +2,9 @@
 
 A fully-featured React rich text editor and preview component built on [Tiptap](https://tiptap.dev/) (ProseMirror) + [Lucide React](https://lucide.dev/) icons.
 
-![Editor](https://raw.githubusercontent.com/brevitaz/react-rich-text-editor/main/screenshots/editor.png)
+![Editor](https://raw.githubusercontent.com/brevitaz/brv-text-editor/main/screenshots/editor.png)
 
-![Preview](https://raw.githubusercontent.com/brevitaz/react-rich-text-editor/main/screenshots/preview.png)
+![Preview](https://raw.githubusercontent.com/brevitaz/brv-text-editor/main/screenshots/preview.png)
 
 ---
 
