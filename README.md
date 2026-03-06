@@ -119,6 +119,7 @@ function NotesPage() {
 | `showActions` | `boolean` | `true` | Whether to show the footer Save/Cancel bar |
 | `minHeight` | `number` | `140` | Minimum editor height in pixels |
 | `autofocus` | `boolean` | `false` | Whether to focus the editor on mount |
+| `variant` | `string` | `'default'` | `'default'` shows the card border/background; `'bare'` removes them for embedding inside a custom container |
 | `toolbar` | `object` | `DEFAULT_TOOLBAR` | Toggle toolbar groups (see below) |
 | `theme` | `string` | `'unleashteams'` | Built-in theme preset |
 | `themeVars` | `object` | `{}` | CSS variable overrides for custom theming |
@@ -167,6 +168,7 @@ Callouts are stored as `<div data-callout="type">` in the HTML output, so they r
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `html` | `string` | `''` | Raw HTML string to render |
+| `variant` | `string` | `'default'` | `'default'` shows the card border/shadow/background; `'bare'` removes them and strips side padding for embedding in a custom container |
 | `showReactions` | `boolean` | `true` | Whether to show the emoji reactions row |
 | `reactions` | `string[]` | `['👍','❤️','🎉','🙌']` | Emoji list for the reactions row |
 | `theme` | `string` | `'unleashteams'` | Built-in theme preset |

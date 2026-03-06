@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import Document from '@tiptap/extension-document'
 import Paragraph from '@tiptap/extension-paragraph'
@@ -10,19 +10,16 @@ import Strike from '@tiptap/extension-strike'
 import Code from '@tiptap/extension-code'
 import CodeBlock from '@tiptap/extension-code-block'
 import Heading from '@tiptap/extension-heading'
-import BulletList from '@tiptap/extension-bullet-list'
-import OrderedList from '@tiptap/extension-ordered-list'
-import ListItem from '@tiptap/extension-list-item'
-import TaskList from '@tiptap/extension-task-list'
-import TaskItem from '@tiptap/extension-task-item'
+import { BulletList, OrderedList, ListItem, TaskList, TaskItem } from '@tiptap/extension-list'
 import Blockquote from '@tiptap/extension-blockquote'
 import HorizontalRule from '@tiptap/extension-horizontal-rule'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import HardBreak from '@tiptap/extension-hard-break'
-import History from '@tiptap/extension-history'
-import Placeholder from '@tiptap/extension-placeholder'
+import { UndoRedo } from '@tiptap/extensions/undo-redo'
+import { Placeholder } from '@tiptap/extensions/placeholder'
 import TextAlign from '@tiptap/extension-text-align'
+import Callout, { CALLOUT_TYPES } from '../extensions/Callout'
 
 import {
   Bold as BoldIcon,
@@ -44,7 +41,25 @@ import {
   Redo,
   Type,
   ChevronDown,
+  MessageSquareWarning,
 } from 'lucide-react'
+
+// ─── Default toolbar group config ──────────────────────────────────────────
+/**
+ * All available toolbar groups and their default enabled state.
+ * Pass a partial object to override, e.g.:
+ *   <RichTextEditor toolbar={{ callouts: false, alignment: false }} />
+ */
+export const DEFAULT_TOOLBAR = {
+  headings:   true,
+  formatting: true,
+  alignment:  true,
+  lists:      true,
+  blocks:     true,
+  callouts:   true,
+  media:      true,
+  history:    true,
+}
 
 // ─── Theme presets ──────────────────────────────────────────────────────────
 /**
@@ -55,10 +70,10 @@ import {
  *   <RichTextEditor themeVars={{ '--rte-color-primary': '#7c3aed' }} />
  */
 export const RTE_THEMES = {
-  /** Default — UnleashTeams teal/cyan palette */
+  /** Default — Teal palette */
   unleashteams: {},
 
-  /** Warm Basecamp-inspired palette */
+  /** Warm earthy palette */
   classic: {
     '--rte-color-primary':       '#1a6b3c',
     '--rte-color-primary-hover': '#f0fdf4',
@@ -439,19 +454,138 @@ function HeadingDropdown({ editor, onClose }) {
   )
 }
 
+// ─── Callout Dropdown ────────────────────────────────────────────────────────
+function CalloutDropdown({ editor, onClose }) {
+  const activeType = CALLOUT_TYPES.find(ct => editor.isActive('callout', { type: ct.key }))
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 'calc(100% + 6px)',
+        left: 0,
+        zIndex: 200,
+        background: 'var(--rte-surface)',
+        border: '1px solid var(--rte-border)',
+        borderRadius: 'var(--rte-radius-lg)',
+        boxShadow: 'var(--rte-dropdown-shadow)',
+        padding: '4px 0',
+        minWidth: 180,
+      }}
+    >
+      {CALLOUT_TYPES.map(ct => {
+        const isActive = activeType?.key === ct.key
+        return (
+          <button
+            key={ct.key}
+            type="button"
+            onClick={() => {
+              editor.chain().focus().toggleCallout(ct.key).run()
+              onClose()
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              width: '100%',
+              textAlign: 'left',
+              padding: '8px 14px',
+              border: 'none',
+              background: isActive ? 'var(--rte-btn-active-bg)' : 'transparent',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontFamily: 'var(--rte-font-family)',
+              fontWeight: isActive ? 600 : 400,
+              color: isActive ? 'var(--rte-btn-active-color)' : 'var(--rte-text)',
+              transition: 'background 0.1s',
+            }}
+            onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--rte-btn-hover-bg)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = isActive ? 'var(--rte-btn-active-bg)' : 'transparent' }}
+          >
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 22,
+                height: 22,
+                borderRadius: 4,
+                background: ct.color + '18',
+                fontSize: 13,
+                flexShrink: 0,
+              }}
+            >
+              {ct.icon}
+            </span>
+            <span>{ct.label}</span>
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: ct.color,
+                marginLeft: 'auto',
+                flexShrink: 0,
+              }}
+            />
+          </button>
+        )
+      })}
+
+      {/* Remove callout option — only show when inside a callout */}
+      {activeType && (
+        <>
+          <div style={{ height: 1, background: 'var(--rte-border-subtle)', margin: '4px 0' }} />
+          <button
+            type="button"
+            onClick={() => {
+              editor.chain().focus().unsetCallout().run()
+              onClose()
+            }}
+            style={{
+              display: 'block',
+              width: '100%',
+              textAlign: 'left',
+              padding: '8px 14px',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontFamily: 'var(--rte-font-family)',
+              fontWeight: 400,
+              color: 'var(--rte-text-muted)',
+              transition: 'background 0.1s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--rte-btn-hover-bg)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+          >
+            Remove callout
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
 // ─── Toolbar ─────────────────────────────────────────────────────────────────
-function Toolbar({ editor }) {
+function Toolbar({ editor, groups, bare }) {
   const [showLinkDialog, setShowLinkDialog]     = useState(false)
   const [showImageDialog, setShowImageDialog]   = useState(false)
   const [showHeadingMenu, setShowHeadingMenu]   = useState(false)
+  const [showCalloutMenu, setShowCalloutMenu]   = useState(false)
   const toolbarRef = useRef(null)
+
+  const closeAll = () => {
+    setShowLinkDialog(false)
+    setShowImageDialog(false)
+    setShowHeadingMenu(false)
+    setShowCalloutMenu(false)
+  }
 
   useEffect(() => {
     const handler = e => {
       if (toolbarRef.current && !toolbarRef.current.contains(e.target)) {
-        setShowLinkDialog(false)
-        setShowImageDialog(false)
-        setShowHeadingMenu(false)
+        closeAll()
       }
     }
     document.addEventListener('mousedown', handler)
@@ -485,6 +619,163 @@ function Toolbar({ editor }) {
 
   const currentLink = editor.getAttributes('link').href || ''
 
+  // Build visible section array with dividers between groups
+  const sections = []
+  let needsDivider = false
+
+  const addSection = (key, content) => {
+    if (!groups[key]) return
+    if (needsDivider) sections.push(<Divider key={`div-${key}`} />)
+    sections.push(content)
+    needsDivider = true
+  }
+
+  // Headings
+  addSection('headings', (
+    <div key="headings" style={{ position: 'relative' }}>
+      <Tooltip text="Text style">
+        <button
+          type="button"
+          onClick={() => { setShowHeadingMenu(v => !v); setShowLinkDialog(false); setShowImageDialog(false); setShowCalloutMenu(false) }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 3,
+            height: 28,
+            padding: '0 8px',
+            border: '1px solid var(--rte-border)',
+            borderRadius: 'var(--rte-radius-sm)',
+            background: showHeadingMenu ? 'var(--rte-btn-hover-bg)' : 'var(--rte-surface)',
+            color: 'var(--rte-text)',
+            cursor: 'pointer',
+            fontSize: 12,
+            fontFamily: 'var(--rte-font-family)',
+            fontWeight: 600,
+            minWidth: 52,
+          }}
+        >
+          {getHeadingLabel()}
+          <ChevronDown size={11} />
+        </button>
+      </Tooltip>
+      {showHeadingMenu && (
+        <HeadingDropdown editor={editor} onClose={() => setShowHeadingMenu(false)} />
+      )}
+    </div>
+  ))
+
+  // Formatting
+  addSection('formatting', (
+    <span key="formatting" style={{ display: 'inline-flex', gap: 2 }}>
+      <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()}      active={editor.isActive('bold')}      title="Bold (⌘B)"><BoldIcon size={13} strokeWidth={2.5} /></ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()}    active={editor.isActive('italic')}    title="Italic (⌘I)"><ItalicIcon size={13} strokeWidth={2.5} /></ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline (⌘U)"><UnderlineIcon size={13} strokeWidth={2.5} /></ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()}    active={editor.isActive('strike')}    title="Strikethrough"><Strikethrough size={13} strokeWidth={2.5} /></ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().toggleCode().run()}      active={editor.isActive('code')}      title="Inline code"><CodeIcon size={13} strokeWidth={2.5} /></ToolbarButton>
+    </span>
+  ))
+
+  // Alignment
+  addSection('alignment', (
+    <span key="alignment" style={{ display: 'inline-flex', gap: 2 }}>
+      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()}   active={editor.isActive({ textAlign: 'left' })}   title="Align left"><AlignLeft size={13} /></ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} title="Align center"><AlignCenter size={13} /></ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('right').run()}  active={editor.isActive({ textAlign: 'right' })}  title="Align right"><AlignRight size={13} /></ToolbarButton>
+    </span>
+  ))
+
+  // Lists
+  addSection('lists', (
+    <span key="lists" style={{ display: 'inline-flex', gap: 2 }}>
+      <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()}  active={editor.isActive('bulletList')}  title="Bullet list"><List size={13} /></ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Numbered list"><ListOrdered size={13} /></ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().toggleTaskList().run()}    active={editor.isActive('taskList')}    title="Task list"><ListChecks size={13} /></ToolbarButton>
+    </span>
+  ))
+
+  // Blocks
+  addSection('blocks', (
+    <span key="blocks" style={{ display: 'inline-flex', gap: 2 }}>
+      <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Blockquote"><Quote size={13} /></ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()}  active={editor.isActive('codeBlock')}  title="Code block">
+        <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, lineHeight: 1, color: 'inherit' }}>{'<>'}</span>
+      </ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal rule"><Minus size={13} /></ToolbarButton>
+    </span>
+  ))
+
+  // Callouts
+  addSection('callouts', (
+    <div key="callouts" style={{ position: 'relative' }}>
+      <Tooltip text="Callout block">
+        <button
+          type="button"
+          onClick={() => { setShowCalloutMenu(v => !v); setShowLinkDialog(false); setShowImageDialog(false); setShowHeadingMenu(false) }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 3,
+            height: 28,
+            padding: '0 8px',
+            border: '1px solid var(--rte-border)',
+            borderRadius: 'var(--rte-radius-sm)',
+            background: showCalloutMenu || editor.isActive('callout') ? 'var(--rte-btn-hover-bg)' : 'var(--rte-surface)',
+            color: editor.isActive('callout') ? 'var(--rte-btn-active-color)' : 'var(--rte-text)',
+            cursor: 'pointer',
+            fontSize: 12,
+            fontFamily: 'var(--rte-font-family)',
+            fontWeight: 600,
+            minWidth: 36,
+          }}
+        >
+          <MessageSquareWarning size={14} />
+          <ChevronDown size={11} />
+        </button>
+      </Tooltip>
+      {showCalloutMenu && (
+        <CalloutDropdown editor={editor} onClose={() => setShowCalloutMenu(false)} />
+      )}
+    </div>
+  ))
+
+  // Media (links + images)
+  addSection('media', (
+    <span key="media" style={{ display: 'inline-flex', gap: 2 }}>
+      <div style={{ position: 'relative' }}>
+        <ToolbarButton
+          onClick={() => { setShowLinkDialog(v => !v); setShowImageDialog(false); setShowHeadingMenu(false); setShowCalloutMenu(false) }}
+          active={editor.isActive('link') || showLinkDialog}
+          title="Insert link"
+        >
+          <LinkIcon size={13} />
+        </ToolbarButton>
+        {showLinkDialog && (
+          <LinkDialog onConfirm={handleLinkInsert} onCancel={() => setShowLinkDialog(false)} initialUrl={currentLink} />
+        )}
+      </div>
+      <div style={{ position: 'relative' }}>
+        <ToolbarButton
+          onClick={() => { setShowImageDialog(v => !v); setShowLinkDialog(false); setShowHeadingMenu(false); setShowCalloutMenu(false) }}
+          active={showImageDialog}
+          title="Insert image"
+        >
+          <ImageIcon size={13} />
+        </ToolbarButton>
+        {showImageDialog && (
+          <ImageDialog onConfirm={handleImageInsert} onCancel={() => setShowImageDialog(false)} />
+        )}
+      </div>
+    </span>
+  ))
+
+  // History
+  addSection('history', (
+    <span key="history" style={{ display: 'inline-flex', gap: 2 }}>
+      <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo (⌘Z)"><Undo size={13} /></ToolbarButton>
+      <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo (⌘⇧Z)"><Redo size={13} /></ToolbarButton>
+    </span>
+  ))
+
   return (
     <div
       ref={toolbarRef}
@@ -496,116 +787,18 @@ function Toolbar({ editor }) {
         padding: '5px 10px',
         borderBottom: '1px solid var(--rte-border-toolbar)',
         background: 'var(--rte-surface-toolbar)',
-        borderRadius: 'calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px) 0 0',
+        borderRadius: bare ? 0 : 'calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px) 0 0',
         position: 'relative',
         userSelect: 'none',
       }}
     >
-      {/* Heading picker */}
-      <div style={{ position: 'relative' }}>
-        <Tooltip text="Text style">
-          <button
-            type="button"
-            onClick={() => { setShowHeadingMenu(v => !v); setShowLinkDialog(false); setShowImageDialog(false) }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 3,
-              height: 28,
-              padding: '0 8px',
-              border: '1px solid var(--rte-border)',
-              borderRadius: 'var(--rte-radius-sm)',
-              background: showHeadingMenu ? 'var(--rte-btn-hover-bg)' : 'var(--rte-surface)',
-              color: 'var(--rte-text)',
-              cursor: 'pointer',
-              fontSize: 12,
-              fontFamily: 'var(--rte-font-family)',
-              fontWeight: 600,
-              minWidth: 52,
-            }}
-          >
-            {getHeadingLabel()}
-            <ChevronDown size={11} />
-          </button>
-        </Tooltip>
-        {showHeadingMenu && (
-          <HeadingDropdown editor={editor} onClose={() => setShowHeadingMenu(false)} />
-        )}
-      </div>
-
-      <Divider />
-
-      {/* Text formatting */}
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()}      active={editor.isActive('bold')}      title="Bold (⌘B)"><BoldIcon size={13} strokeWidth={2.5} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()}    active={editor.isActive('italic')}    title="Italic (⌘I)"><ItalicIcon size={13} strokeWidth={2.5} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline (⌘U)"><UnderlineIcon size={13} strokeWidth={2.5} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()}    active={editor.isActive('strike')}    title="Strikethrough"><Strikethrough size={13} strokeWidth={2.5} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleCode().run()}      active={editor.isActive('code')}      title="Inline code"><CodeIcon size={13} strokeWidth={2.5} /></ToolbarButton>
-
-      <Divider />
-
-      {/* Alignment */}
-      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()}   active={editor.isActive({ textAlign: 'left' })}   title="Align left"><AlignLeft size={13} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} title="Align center"><AlignCenter size={13} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('right').run()}  active={editor.isActive({ textAlign: 'right' })}  title="Align right"><AlignRight size={13} /></ToolbarButton>
-
-      <Divider />
-
-      {/* Lists */}
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()}  active={editor.isActive('bulletList')}  title="Bullet list"><List size={13} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Numbered list"><ListOrdered size={13} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleTaskList().run()}    active={editor.isActive('taskList')}    title="Task list"><ListChecks size={13} /></ToolbarButton>
-
-      <Divider />
-
-      {/* Block elements */}
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Blockquote"><Quote size={13} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()}  active={editor.isActive('codeBlock')}  title="Code block">
-        <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, lineHeight: 1, color: 'inherit' }}>{'<>'}</span>
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal rule"><Minus size={13} /></ToolbarButton>
-
-      <Divider />
-
-      {/* Link */}
-      <div style={{ position: 'relative' }}>
-        <ToolbarButton
-          onClick={() => { setShowLinkDialog(v => !v); setShowImageDialog(false); setShowHeadingMenu(false) }}
-          active={editor.isActive('link') || showLinkDialog}
-          title="Insert link"
-        >
-          <LinkIcon size={13} />
-        </ToolbarButton>
-        {showLinkDialog && (
-          <LinkDialog onConfirm={handleLinkInsert} onCancel={() => setShowLinkDialog(false)} initialUrl={currentLink} />
-        )}
-      </div>
-
-      {/* Image */}
-      <div style={{ position: 'relative' }}>
-        <ToolbarButton
-          onClick={() => { setShowImageDialog(v => !v); setShowLinkDialog(false); setShowHeadingMenu(false) }}
-          active={showImageDialog}
-          title="Insert image"
-        >
-          <ImageIcon size={13} />
-        </ToolbarButton>
-        {showImageDialog && (
-          <ImageDialog onConfirm={handleImageInsert} onCancel={() => setShowImageDialog(false)} />
-        )}
-      </div>
-
-      <Divider />
-
-      {/* History */}
-      <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo (⌘Z)"><Undo size={13} /></ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo (⌘⇧Z)"><Redo size={13} /></ToolbarButton>
+      {sections}
     </div>
   )
 }
 
 // ─── Editor Footer ───────────────────────────────────────────────────────────
-function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions }) {
+function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions, bare }) {
   if (!editor) return null
   const text       = editor.getText()
   const wordCount  = text.trim() ? text.trim().split(/\s+/).length : 0
@@ -620,7 +813,7 @@ function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions }) 
         padding: '7px 12px',
         borderTop: '1px solid var(--rte-border-toolbar)',
         background: 'var(--rte-surface-toolbar)',
-        borderRadius: '0 0 calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px)',
+        borderRadius: bare ? 0 : '0 0 calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px)',
       }}
     >
       <span style={{ fontSize: 11, color: 'var(--rte-text-muted)', fontFamily: 'var(--rte-font-family)' }}>
@@ -688,8 +881,13 @@ function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions }) 
  * minHeight       number   – Minimum editor content height in px (default: 140)
  * autofocus       boolean  – Autofocus on mount (default: false)
  * className       string   – Extra class applied to the outermost wrapper
+ * variant         string   – 'default' | 'bare'. 'bare' removes the outer border,
+ *                            border-radius and background so the editor embeds flush
+ *                            inside any custom container (default: 'default')
  * theme           string   – Built-in preset: 'unleashteams' | 'classic'
  * themeVars       object   – CSS variable overrides, e.g. { '--rte-color-primary': '#7c3aed' }
+ * toolbar         object   – Toggle toolbar groups. Keys: headings, formatting, alignment,
+ *                            lists, blocks, callouts, media, history  (default: all true)
  */
 export default function RichTextEditor({
   initialContent = '',
@@ -702,41 +900,85 @@ export default function RichTextEditor({
   minHeight      = 140,
   autofocus      = false,
   className      = '',
+  variant        = 'default',
   theme          = 'unleashteams',
   themeVars      = {},
+  toolbar        = {},
 }) {
-  const editor = useEditor({
-    extensions: [
+  // Resolve toolbar groups — merge defaults with consumer overrides
+  const resolvedToolbar = useMemo(
+    () => ({ ...DEFAULT_TOOLBAR, ...toolbar }),
+    [toolbar]
+  )
+
+  // Build extensions list based on which toolbar groups are enabled.
+  // Core extensions (Document, Paragraph, Text, HardBreak) are always loaded
+  // so the editor can function even with everything toggled off.
+  const extensions = useMemo(() => {
+    const exts = [
       Document,
       Paragraph,
       Text,
-      Bold,
-      Italic,
-      Underline,
-      Strike,
-      Code,
-      CodeBlock,
-      Heading.configure({ levels: [1, 2, 3] }),
-      BulletList,
-      OrderedList,
-      ListItem,
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Blockquote,
-      HorizontalRule,
       HardBreak,
-      History,
-      Image,
-      Link.configure({
-        openOnClick: false,
-        autolink: true,
-        HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' },
-      }),
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Placeholder.configure({ placeholder }),
-    ],
+    ]
+
+    // Headings
+    if (resolvedToolbar.headings) {
+      exts.push(Heading.configure({ levels: [1, 2, 3] }))
+    }
+
+    // Formatting  — always load these since they're core inline marks,
+    // but the toolbar buttons will be hidden.  This keeps keyboard shortcuts
+    // and pasted content working even when toolbar is hidden.
+    exts.push(Bold, Italic, Underline, Strike, Code)
+
+    // Alignment
+    if (resolvedToolbar.alignment) {
+      exts.push(TextAlign.configure({ types: ['heading', 'paragraph'] }))
+    }
+
+    // Lists
+    if (resolvedToolbar.lists) {
+      exts.push(BulletList, OrderedList, ListItem, TaskList, TaskItem.configure({ nested: true }))
+    }
+
+    // Blocks
+    if (resolvedToolbar.blocks) {
+      exts.push(Blockquote, CodeBlock, HorizontalRule)
+    }
+
+    // Callouts
+    if (resolvedToolbar.callouts) {
+      exts.push(Callout)
+    }
+
+    // Media
+    if (resolvedToolbar.media) {
+      exts.push(
+        Image,
+        Link.configure({
+          openOnClick: false,
+          autolink: true,
+          HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' },
+        }),
+      )
+    }
+
+    // History (renamed to UndoRedo in v3)
+    if (resolvedToolbar.history) {
+      exts.push(UndoRedo)
+    }
+
+    return exts
+  }, [resolvedToolbar, placeholder])
+
+  const editor = useEditor({
+    extensions,
     content: initialContent,
     autofocus,
+    immediatelyRender: false,
+    shouldRerenderOnTransaction: true,
     onUpdate({ editor }) {
       onChange?.(editor.getHTML())
     },
@@ -746,22 +988,27 @@ export default function RichTextEditor({
   const presetVars   = RTE_THEMES[theme] ?? {}
   const resolvedVars = { ...presetVars, ...themeVars }
 
+  const isBare = variant === 'bare'
+
   return (
     <div
       className={`rte-root editor-wrapper ${className}`.trim()}
       data-rte-theme={theme}
+      data-rte-variant={variant}
       style={{
-        border: '1px solid var(--rte-border)',
-        borderRadius: 'var(--rte-radius)',
-        background: 'var(--rte-surface)',
+        ...(isBare ? {} : {
+          border: '1px solid var(--rte-border)',
+          borderRadius: 'var(--rte-radius)',
+          background: 'var(--rte-surface)',
+          overflow: 'hidden',
+          transition: 'box-shadow 0.15s, border-color 0.15s',
+        }),
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
-        transition: 'box-shadow 0.15s, border-color 0.15s',
         ...resolvedVars,
       }}
     >
-      <Toolbar editor={editor} />
+      <Toolbar editor={editor} groups={resolvedToolbar} bare={isBare} />
       <div
         className="editor-content"
         style={{ minHeight, overflow: 'auto', cursor: 'text' }}
@@ -775,6 +1022,7 @@ export default function RichTextEditor({
         onCancel={onCancel}
         submitLabel={submitLabel}
         showActions={showActions}
+        bare={isBare}
       />
     </div>
   )

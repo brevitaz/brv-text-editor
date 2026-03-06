@@ -24409,7 +24409,7 @@ function CalloutDropdown({ editor, onClose }) {
     ))
   );
 }
-function Toolbar({ editor, groups }) {
+function Toolbar({ editor, groups, bare }) {
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
@@ -24564,7 +24564,7 @@ function Toolbar({ editor, groups }) {
         padding: "5px 10px",
         borderBottom: "1px solid var(--rte-border-toolbar)",
         background: "var(--rte-surface-toolbar)",
-        borderRadius: "calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px) 0 0",
+        borderRadius: bare ? 0 : "calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px) 0 0",
         position: "relative",
         userSelect: "none"
       }
@@ -24572,7 +24572,7 @@ function Toolbar({ editor, groups }) {
     sections
   );
 }
-function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions }) {
+function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions, bare }) {
   if (!editor) return null;
   const text = editor.getText();
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -24587,7 +24587,7 @@ function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions }) 
         padding: "7px 12px",
         borderTop: "1px solid var(--rte-border-toolbar)",
         background: "var(--rte-surface-toolbar)",
-        borderRadius: "0 0 calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px)"
+        borderRadius: bare ? 0 : "0 0 calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px)"
       }
     },
     /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--rte-text-muted)", fontFamily: "var(--rte-font-family)" } }, wordCount, " word", wordCount !== 1 ? "s" : "", " · ", charCount, " char", charCount !== 1 ? "s" : ""),
@@ -24641,6 +24641,7 @@ function RichTextEditor({
   minHeight = 140,
   autofocus = false,
   className = "",
+  variant = "default",
   theme = "unleashteams",
   themeVars = {},
   toolbar = {}
@@ -24700,23 +24701,27 @@ function RichTextEditor({
   });
   const presetVars = RTE_THEMES[theme] ?? {};
   const resolvedVars = { ...presetVars, ...themeVars };
+  const isBare = variant === "bare";
   return /* @__PURE__ */ React.createElement(
     "div",
     {
       className: `rte-root editor-wrapper ${className}`.trim(),
       "data-rte-theme": theme,
+      "data-rte-variant": variant,
       style: {
-        border: "1px solid var(--rte-border)",
-        borderRadius: "var(--rte-radius)",
-        background: "var(--rte-surface)",
+        ...isBare ? {} : {
+          border: "1px solid var(--rte-border)",
+          borderRadius: "var(--rte-radius)",
+          background: "var(--rte-surface)",
+          overflow: "hidden",
+          transition: "box-shadow 0.15s, border-color 0.15s"
+        },
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
-        transition: "box-shadow 0.15s, border-color 0.15s",
         ...resolvedVars
       }
     },
-    /* @__PURE__ */ React.createElement(Toolbar, { editor, groups: resolvedToolbar }),
+    /* @__PURE__ */ React.createElement(Toolbar, { editor, groups: resolvedToolbar, bare: isBare }),
     /* @__PURE__ */ React.createElement(
       "div",
       {
@@ -24733,7 +24738,8 @@ function RichTextEditor({
         onSubmit,
         onCancel,
         submitLabel,
-        showActions
+        showActions,
+        bare: isBare
       }
     )
   );
@@ -24772,6 +24778,7 @@ function EmojiReaction({ emoji: emoji2 }) {
 }
 function RichTextPreview({
   html = "",
+  variant = "default",
   showReactions = true,
   reactions = ["👍", "❤️", "🎉", "🙌"],
   theme = "unleashteams",
@@ -24779,21 +24786,25 @@ function RichTextPreview({
 }) {
   const presetVars = RTE_THEMES[theme] ?? {};
   const resolvedVars = { ...presetVars, ...themeVars };
+  const isBare = variant === "bare";
   return /* @__PURE__ */ React.createElement(
     "div",
     {
       className: "rte-root",
       "data-rte-theme": theme,
+      "data-rte-variant": variant,
       style: {
         width: "100%",
-        maxWidth: 720,
-        marginTop: 20,
-        background: "var(--rte-surface)",
-        borderRadius: "var(--rte-radius-lg)",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)",
-        overflow: "hidden",
-        animation: "rtp-slideDown 0.22s ease",
-        border: "1px solid var(--rte-border)",
+        ...isBare ? {} : {
+          maxWidth: 720,
+          marginTop: 20,
+          background: "var(--rte-surface)",
+          borderRadius: "var(--rte-radius-lg)",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)",
+          overflow: "hidden",
+          animation: "rtp-slideDown 0.22s ease",
+          border: "1px solid var(--rte-border)"
+        },
         ...resolvedVars
       }
     },
@@ -24802,7 +24813,7 @@ function RichTextPreview({
       {
         className: "rtp-content",
         dangerouslySetInnerHTML: { __html: html },
-        style: { padding: "14px 22px 20px" }
+        style: { padding: isBare ? "0" : "14px 22px 20px" }
       }
     ),
     showReactions && reactions.length > 0 && /* @__PURE__ */ React.createElement(
