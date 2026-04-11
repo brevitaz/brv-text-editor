@@ -7,3 +7,4 @@ demo-dist/
 
 *.local
 .DS_Store
+.idea/

@@ -3,7 +3,19 @@ import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      // Use classic runtime (React.createElement) so the UMD build works in
+      // browsers with just the React UMD global — no jsx-runtime shim needed.
+      jsxRuntime: 'classic',
+    }),
+  ],
+  define: {
+    // Strip development-only code from bundled dependencies (e.g.
+    // use-sync-external-store shim) so their dev-time error messages
+    // don't leak into the library output.
+    'process.env.NODE_ENV': JSON.stringify('production'),
+  },
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.js'),
@@ -15,6 +27,9 @@ export default defineConfig({
     },
     rollupOptions: {
       // React must be provided by the host application — don't bundle it.
+      // react/jsx-runtime must also be external: pre-compiled deps (e.g. Tiptap)
+      // use the automatic JSX transform internally, and bundling it would pull
+      // in a duplicate copy of React's jsx-runtime, causing runtime errors.
       external: ['react', 'react-dom', 'react/jsx-runtime'],
       output: {
         globals: {

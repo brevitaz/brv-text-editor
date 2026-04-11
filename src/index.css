@@ -1,13 +1,9 @@
-*, *::before, *::after {
+/* Scoped reset — only affects the editor component, not the host application */
+.rte-root,
+.rte-root *,
+.rte-root *::before,
+.rte-root *::after {
   box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  background: #f0f4f8;
-  color: #1a202c;
-  -webkit-font-smoothing: antialiased;
 }
 
 /* ─── Design Tokens ─────────────────────────────────────────────────────────
@@ -26,7 +22,7 @@ body {
  *
  * ─────────────────────────────────────────────────────────────────────────── */
 
-/* Default theme — UnleashTeams teal/cyan palette */
+/* Default theme — Teal palette */
 .rte-root {
   /* ── Brand ───────────────────────────────────────────── */
   --rte-color-primary:        #065666;   /* primary CTA / active icon color   */
@@ -92,7 +88,7 @@ body {
 }
 
 
-/* ─── Classic theme preset (warm Basecamp-inspired palette) ─────────────── */
+/* ─── Classic theme preset (warm earthy palette) ─────────────────────────── */
 .rte-root[data-rte-theme="classic"] {
   --rte-color-primary:        #1a6b3c;
   --rte-color-primary-hover:  #f0fdf4;
@@ -258,6 +254,66 @@ body {
   text-decoration: line-through;
   color: var(--rte-text-muted);
 }
+
+/* ─── Callout blocks ────────────────────────────────────────────────────── */
+
+.rte-root .ProseMirror .rte-callout,
+.rte-root .rtp-content .rte-callout {
+  border-left: 4px solid var(--_callout-color, #64748b);
+  background: var(--_callout-bg, #f8fafc);
+  border-radius: 0 var(--rte-radius) var(--rte-radius) 0;
+  padding: 12px 16px;
+  margin: 0.5em 0;
+  position: relative;
+}
+
+.rte-root .ProseMirror .rte-callout p:last-child,
+.rte-root .rtp-content .rte-callout p:last-child {
+  margin-bottom: 0;
+}
+
+/* Info — blue */
+.rte-root .ProseMirror .rte-callout--info,
+.rte-root .rtp-content .rte-callout--info {
+  --_callout-color: #2563eb;
+  --_callout-bg:    #eff6ff;
+}
+
+/* Success — green */
+.rte-root .ProseMirror .rte-callout--success,
+.rte-root .rtp-content .rte-callout--success {
+  --_callout-color: #16a34a;
+  --_callout-bg:    #f0fdf4;
+}
+
+/* Warning — amber */
+.rte-root .ProseMirror .rte-callout--warning,
+.rte-root .rtp-content .rte-callout--warning {
+  --_callout-color: #d97706;
+  --_callout-bg:    #fffbeb;
+}
+
+/* Danger — red */
+.rte-root .ProseMirror .rte-callout--danger,
+.rte-root .rtp-content .rte-callout--danger {
+  --_callout-color: #dc2626;
+  --_callout-bg:    #fef2f2;
+}
+
+/* Tip — purple */
+.rte-root .ProseMirror .rte-callout--tip,
+.rte-root .rtp-content .rte-callout--tip {
+  --_callout-color: #7c3aed;
+  --_callout-bg:    #faf5ff;
+}
+
+/* Note — gray */
+.rte-root .ProseMirror .rte-callout--note,
+.rte-root .rtp-content .rte-callout--note {
+  --_callout-color: #64748b;
+  --_callout-bg:    #f8fafc;
+}
+
 
 /* Placeholder */
 .rte-root .ProseMirror p.is-editor-empty:first-child::before {

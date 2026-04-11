@@ -4,5 +4,6 @@
 
 import './index.css'
 
-export { default as RichTextEditor, RTE_THEMES, createTheme } from './components/RichTextEditor.jsx'
+export { default as RichTextEditor, RTE_THEMES, createTheme, DEFAULT_TOOLBAR } from './components/RichTextEditor.jsx'
 export { default as RichTextPreview } from './components/RichTextPreview.jsx'
+export { default as Callout, CALLOUT_TYPES } from './extensions/Callout.js'
