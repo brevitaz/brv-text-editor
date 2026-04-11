@@ -22,6 +22,7 @@ A fully-featured React rich text editor and preview component built on [Tiptap](
 | **History** | Undo / Redo |
 | **Configurable toolbar** | Enable/disable toolbar groups via the `toolbar` prop |
 | **Word count** | Live character and word count in the footer |
+| **Suggestion triggers** | Generic @mentions, #hashtags, or any custom trigger — sync & async, with keyboard nav |
 | **Theming** | Built-in presets + full CSS variable customisation via `createTheme()` |
 | **Preview** | `RichTextPreview` renders saved HTML in a styled card with emoji reactions |
 
@@ -123,6 +124,7 @@ function NotesPage() {
 | `toolbar` | `object` | `DEFAULT_TOOLBAR` | Toggle toolbar groups (see below) |
 | `theme` | `string` | `'unleashteams'` | Built-in theme preset |
 | `themeVars` | `object` | `{}` | CSS variable overrides for custom theming |
+| `triggers` | `TriggerConfig[]` | `[]` | Suggestion trigger configurations (see [Suggestion Triggers](#suggestion-triggers)) |
 | `className` | `string` | `''` | Additional class for the root wrapper |
 
 #### Toolbar groups
@@ -173,6 +175,177 @@ Callouts are stored as `<div data-callout="type">` in the HTML output, so they r
 | `reactions` | `string[]` | `['👍','❤️','🎉','🙌']` | Emoji list for the reactions row |
 | `theme` | `string` | `'unleashteams'` | Built-in theme preset |
 | `themeVars` | `object` | `{}` | CSS variable overrides for custom theming |
+| `onSuggestionClick` | `(trigger, id, label) => void` | — | Callback when a suggestion token (@mention, #tag) is clicked in the preview |
+
+---
+
+## Suggestion Triggers
+
+The `triggers` prop lets you add @mentions, #hashtags, or any custom trigger character to the editor. Each trigger is configured independently and supports both **sync** (local array) and **async** (API call) data sources.
+
+### Trigger config
+
+| Property | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `char` | `string` | ✅ | — | Trigger character (e.g. `'@'`, `'#'`, `'/'`) |
+| `items` | `(query: string) => Item[] \| Promise<Item[]>` | ✅ | — | Returns matching items — can be sync (return array) or async (return Promise) |
+| `onSelect` | `(item: Item) => void` | — | — | Called when an item is selected |
+| `minChars` | `number` | — | `0` | Minimum characters after trigger before showing suggestions |
+| `debounce` | `number` | — | `0` | Debounce delay in ms for async data sources |
+| `renderItem` | `(item, selected) => ReactNode` | — | — | Custom render for each dropdown row |
+| `renderList` | `({ items, selectedIndex, command }) => ReactNode` | — | — | Full override for the entire dropdown content |
+
+### Item shape
+
+Each item must have this shape:
+
+```ts
+{ id: string, label: string, [key: string]: any }
+```
+
+`id` is stored in the document; `label` is displayed in the token. You can attach any extra fields (e.g. `email`, `avatar`) for use in `renderItem`.
+
+### Example — Sync hashtags (local data)
+
+```jsx
+import { RichTextEditor } from '@brevitaz/brv-text-editor'
+
+const TAGS = [
+  { id: 't1', label: 'roadmap' },
+  { id: 't2', label: 'bug' },
+  { id: 't3', label: 'feature' },
+  { id: 't4', label: 'design' },
+]
+
+function Editor() {
+  return (
+    <RichTextEditor
+      placeholder="Type # to add a tag…"
+      triggers={[
+        {
+          char: '#',
+          items: (query) =>
+            TAGS.filter(t =>
+              t.label.toLowerCase().includes(query.toLowerCase())
+            ),
+          minChars: 1,
+        },
+      ]}
+      onSubmit={(html) => console.log(html)}
+      showActions
+    />
+  )
+}
+```
+
+### Example — Async @mentions (API call)
+
+```jsx
+import { RichTextEditor } from '@brevitaz/brv-text-editor'
+
+const fetchUsers = async (query) => {
+  const res = await fetch(`/api/users?search=${encodeURIComponent(query)}`)
+  const users = await res.json()
+  return users.map(u => ({
+    id: String(u.id),
+    label: u.name,
+    email: u.email,
+  }))
+}
+
+function Editor() {
+  return (
+    <RichTextEditor
+      placeholder="Type @ to mention someone…"
+      triggers={[
+        {
+          char: '@',
+          items: fetchUsers,
+          debounce: 300,
+          onSelect: (item) => console.log('Mentioned:', item),
+          renderItem: (item, selected) => (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%',
+                background: selected ? '#065666' : '#718096',
+                color: '#fff', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontSize: 11, fontWeight: 600,
+              }}>
+                {item.label.split(' ').map(n => n[0]).join('')}
+              </div>
+              <div>
+                <div>{item.label}</div>
+                {item.email && (
+                  <div style={{ fontSize: 11, color: '#718096' }}>
+                    {item.email}
+                  </div>
+                )}
+              </div>
+            </div>
+          ),
+        },
+      ]}
+      onSubmit={(html) => console.log(html)}
+      showActions
+    />
+  )
+}
+```
+
+### Example — Multiple triggers together
+
+```jsx
+<RichTextEditor
+  triggers={[
+    { char: '@', items: fetchUsers, debounce: 300 },
+    { char: '#', items: (q) => TAGS.filter(t => t.label.includes(q)), minChars: 1 },
+  ]}
+  onSubmit={handleSave}
+  showActions
+/>
+```
+
+### Handling clicks in preview
+
+When rendering saved HTML with `RichTextPreview`, you can respond to clicks on suggestion tokens:
+
+```jsx
+<RichTextPreview
+  html={savedHtml}
+  onSuggestionClick={(trigger, id, label) => {
+    if (trigger === '@') {
+      navigate(`/users/${id}`)   // navigate to user profile
+    } else if (trigger === '#') {
+      navigate(`/tags/${label}`)  // navigate to tag page
+    }
+  }}
+/>
+```
+
+### HTML output
+
+Suggestion tokens are stored as semantic HTML spans:
+
+```html
+<span data-trigger="@" data-id="3" class="rte-suggestion">@Clementine Bauch</span>
+<span data-trigger="#" data-id="t1" class="rte-suggestion">#roadmap</span>
+```
+
+### Styling tokens
+
+Suggestion tokens are styled via CSS variables:
+
+| Variable | Description | Default |
+|---|---|---|
+| `--rte-suggestion-bg` | Token background color | `var(--rte-color-primary-hover)` |
+| `--rte-suggestion-color` | Token text color | `var(--rte-color-primary)` |
+
+### Important notes
+
+- The suggestion dropdown renders via a **React portal** to `document.body`. CSS variables defined inside `.rte-root` won't reach it, so the dropdown uses hardcoded fallback values.
+- If you use a custom `renderItem`, use **hardcoded colors** (not CSS variables) for the same reason.
+- Keyboard navigation (Arrow Up/Down, Enter, Escape) works out of the box.
+- Async sources are automatically debounced; stale API responses are discarded.
 
 ---
 
@@ -258,7 +431,11 @@ rich-text-editor/
 │   │   ├── RichTextEditor.jsx    ← Editor component
 │   │   └── RichTextPreview.jsx   ← Preview card component
 │   ├── extensions/
-│   │   └── Callout.js            ← Custom callout block extension
+│   │   ├── Callout.js            ← Custom callout block extension
+│   │   └── suggestion/
+│   │       ├── SuggestionNode.js         ← TipTap node for inline tokens
+│   │       ├── createSuggestionPlugin.js ← Factory for trigger plugins
+│   │       └── SuggestionDropdown.jsx    ← Dropdown popup component
 │   ├── App.jsx                   ← Demo application
 │   └── main.jsx                  ← Demo entry point
 ├── vite.config.js                ← Demo app Vite config

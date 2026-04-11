@@ -20,6 +20,8 @@ import { UndoRedo } from '@tiptap/extensions/undo-redo'
 import { Placeholder } from '@tiptap/extensions/placeholder'
 import TextAlign from '@tiptap/extension-text-align'
 import Callout, { CALLOUT_TYPES } from '../extensions/Callout'
+import SuggestionNode from '../extensions/suggestion/SuggestionNode'
+import createSuggestionPlugin from '../extensions/suggestion/createSuggestionPlugin'
 
 import {
   Bold as BoldIcon,
@@ -888,6 +890,9 @@ function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions, ba
  * themeVars       object   – CSS variable overrides, e.g. { '--rte-color-primary': '#7c3aed' }
  * toolbar         object   – Toggle toolbar groups. Keys: headings, formatting, alignment,
  *                            lists, blocks, callouts, media, history  (default: all true)
+ * triggers       array    – Suggestion trigger configs. Each entry:
+ *                            { char, items, onSelect?, minChars?, debounce?,
+ *                              renderItem?, renderList? }
  */
 export default function RichTextEditor({
   initialContent = '',
@@ -904,12 +909,20 @@ export default function RichTextEditor({
   theme          = 'unleashteams',
   themeVars      = {},
   toolbar        = {},
+  triggers,
 }) {
   // Resolve toolbar groups — merge defaults with consumer overrides
   const resolvedToolbar = useMemo(
     () => ({ ...DEFAULT_TOOLBAR, ...toolbar }),
     [toolbar]
   )
+
+  // Keep latest triggers accessible in the extensions memo without making every
+  // inline array literal cause a rebuild. The extensions only need to rebuild
+  // when the set of trigger characters changes.
+  const triggersRef = useRef(triggers)
+  triggersRef.current = triggers
+  const triggersKey = triggers?.map(t => t?.char).join(',') ?? ''
 
   // Build extensions list based on which toolbar groups are enabled.
   // Core extensions (Document, Paragraph, Text, HardBreak) are always loaded
@@ -970,8 +983,33 @@ export default function RichTextEditor({
       exts.push(UndoRedo)
     }
 
+    // Suggestion triggers (@mentions, #hashtags, etc.)
+    if (triggersRef.current?.length) {
+      exts.push(SuggestionNode)
+      triggersRef.current.forEach((t, i) => {
+        if (!t || typeof t !== 'object') {
+          console.error(`[brv-text-editor] triggers[${i}] must be an object, got ${typeof t}`)
+          return
+        }
+        if (typeof t.char !== 'string' || t.char.length === 0) {
+          console.error(`[brv-text-editor] triggers[${i}].char must be a non-empty string, got ${JSON.stringify(t.char)}`)
+          return
+        }
+        if (typeof t.items !== 'function') {
+          console.error(`[brv-text-editor] triggers[${i}].items must be a function, got ${typeof t.items}`)
+          return
+        }
+        exts.push(createSuggestionPlugin(t))
+      })
+    }
+
     return exts
-  }, [resolvedToolbar, placeholder])
+    // triggersKey (not triggers) is used so inline array literals don't rebuild
+    // extensions on every render. Extensions rebuild only when the set of trigger
+    // characters changes. If you need to swap items() without changing chars,
+    // wrap triggers in useMemo in the consumer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedToolbar, placeholder, triggersKey])
 
   const editor = useEditor({
     extensions,
