@@ -19,6 +19,60 @@ const purpleTheme = createTheme({
   '--rte-selection-bg':        '#ede9fe',
 })
 
+// ─── Sample data for suggestion triggers demo ──────────────────────────────────
+
+// Async @mentions — fetches users from JSONPlaceholder API (simulates real API call)
+const fetchUsers = async (query) => {
+  console.log(`[API] Fetching users for query: "${query}"`)
+  const res = await fetch('https://jsonplaceholder.typicode.com/users')
+  const users = await res.json()
+  return users
+    .filter(u => u.name.toLowerCase().includes(query.toLowerCase()))
+    .map(u => ({ id: String(u.id), label: u.name, email: u.email }))
+}
+
+// Sync #hashtags — local data, no API call
+const SAMPLE_TAGS = [
+  { id: 't1', label: 'roadmap' },
+  { id: 't2', label: 'bug' },
+  { id: 't3', label: 'feature' },
+  { id: 't4', label: 'design' },
+  { id: 't5', label: 'documentation' },
+]
+
+const DEMO_TRIGGERS = [
+  {
+    char: '@',
+    items: fetchUsers,  // async — returns Promise<Item[]>
+    onSelect: (item) => console.log('Mentioned:', item),
+    debounce: 300,      // debounce API calls by 300ms
+    renderItem: (item, selected) => (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%',
+          background: selected ? '#065666' : '#718096',
+          color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 11, fontWeight: 600,
+        }}>
+          {item.label.split(' ').map(n => n[0]).join('')}
+        </div>
+        <div>
+          <div>{item.label}</div>
+          {item.email && <div style={{ fontSize: 11, color: '#718096' }}>{item.email}</div>}
+        </div>
+      </div>
+    ),
+  },
+  {
+    char: '#',
+    items: (query) =>
+      SAMPLE_TAGS.filter(t =>
+        t.label.toLowerCase().includes(query.toLowerCase())
+      ),
+    minChars: 1,
+  },
+]
+
 // ─── Sidebar navigation mock ───────────────────────────────────────────────────
 function Sidebar() {
   const items = [
@@ -291,6 +345,7 @@ export default function App() {
               autofocus={false}
               theme={activeTheme === 'purple' ? 'unleashteams' : activeTheme}
               themeVars={activeTheme === 'purple' ? purpleTheme : {}}
+              triggers={DEMO_TRIGGERS}
             />
           </div>
 
@@ -304,6 +359,7 @@ export default function App() {
               onDismiss={() => dismissNote(note.id)}
               theme={activeTheme === 'purple' ? 'unleashteams' : activeTheme}
               themeVars={activeTheme === 'purple' ? purpleTheme : {}}
+              onSuggestionClick={(trigger, id, label) => console.log('Clicked:', { trigger, id, label })}
             />
           ))}
 

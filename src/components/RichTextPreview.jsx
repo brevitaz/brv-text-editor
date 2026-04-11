@@ -56,6 +56,8 @@ function EmojiReaction({ emoji }) {
  * reactions      {string[]} – Emoji list (default: ['👍','❤️','🎉','🙌'])
  * theme          {string}   – Built-in preset: 'unleashteams' | 'classic'
  * themeVars      {object}   – CSS variable overrides
+ * onSuggestionClick {function} – (trigger, id, label) => void. When provided,
+ *                                suggestion tokens become clickable in the preview.
  */
 export default function RichTextPreview({
   html          = '',
@@ -64,11 +66,30 @@ export default function RichTextPreview({
   reactions     = ['👍', '❤️', '🎉', '🙌'],
   theme         = 'unleashteams',
   themeVars     = {},
+  onSuggestionClick,
 }) {
   // Merge preset vars + instance overrides
   const presetVars   = RTE_THEMES[theme] ?? {}
   const resolvedVars = { ...presetVars, ...themeVars }
   const isBare       = variant === 'bare'
+
+  const handleContentClick = (e) => {
+    if (!onSuggestionClick) return
+    const el = e.target.closest('.rte-suggestion')
+    if (el) {
+      const trigger = el.dataset.trigger
+      const id = el.dataset.id
+      // Skip elements missing data attributes (e.g. sanitized or hand-authored HTML)
+      if (!trigger || !id) return
+      const rawText = el.textContent
+      // Strip the leading trigger character so label matches the original item label
+      const label = rawText.startsWith(trigger) ? rawText.slice(trigger.length) : rawText
+      onSuggestionClick(trigger, id, label)
+    }
+  }
+
+  // Guard against null being passed explicitly (prop default only covers undefined)
+  const safeHtml = html ?? ''
 
   return (
     <div
@@ -92,8 +113,9 @@ export default function RichTextPreview({
     >
       {/* Content */}
       <div
-        className="rtp-content"
-        dangerouslySetInnerHTML={{ __html: html }}
+        className={`rtp-content${onSuggestionClick ? ' rtp-suggestions-clickable' : ''}`}
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
+        onClick={handleContentClick}
         style={{ padding: isBare ? '0' : '14px 22px 20px' }}
       />
 
