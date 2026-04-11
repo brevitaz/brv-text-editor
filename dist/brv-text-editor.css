@@ -76,6 +76,12 @@
   /* ── Shadow ──────────────────────────────────────────── */
   --rte-dropdown-shadow:      0 4px 20px rgba(0, 0, 0, 0.1), 0 1px 4px rgba(0, 0, 0, 0.06);
 
+  /* ── Suggestions ─────────────────────────────────────── */
+  --rte-suggestion-bg:            var(--rte-color-primary-hover);
+  --rte-suggestion-color:         var(--rte-color-primary);
+  --rte-suggestion-item-hover:    var(--rte-btn-hover-bg);
+  --rte-suggestion-item-selected: var(--rte-color-primary-hover);
+
   /* Apply font to component root */
   font-family: var(--rte-font-family);
   font-size: var(--rte-font-size);
@@ -449,3 +455,28 @@
 .rte-root .rtp-content [style*="text-align: center"] { text-align: center; }
 .rte-root .rtp-content [style*="text-align: right"]  { text-align: right; }
 .rte-root .rtp-content [style*="text-align: left"]   { text-align: left; }
+
+/* ─── Suggestion tokens (inline @mentions, #hashtags, etc.) ───────────────── */
+
+.rte-root .rte-suggestion {
+  background: var(--rte-suggestion-bg);
+  color: var(--rte-suggestion-color);
+  border-radius: var(--rte-radius-sm);
+  padding: 1px 4px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Preview: clickable suggestion tokens (when onSuggestionClick is provided) */
+.rte-root .rtp-content.rtp-suggestions-clickable .rte-suggestion {
+  cursor: pointer;
+}
+
+.rte-root .rtp-content.rtp-suggestions-clickable .rte-suggestion:hover {
+  text-decoration: underline;
+}
+
+/* Dropdown hover for non-selected items */
+.rte-suggestion-dropdown button:hover {
+  background: var(--rte-suggestion-item-hover, var(--rte-btn-hover-bg)) !important;
+}

@@ -3964,7 +3964,8 @@
       return new ReplaceStep(this.from, this.from + this.slice.size, doc2.slice(this.from, this.to));
     }
     map(mapping) {
-      let from = mapping.mapResult(this.from, 1), to = mapping.mapResult(this.to, -1);
+      let to = mapping.mapResult(this.to, -1);
+      let from = this.from == this.to && ReplaceStep.MAP_BIAS < 0 ? to : mapping.mapResult(this.from, 1);
       if (from.deletedAcross && to.deletedAcross)
         return null;
       return new ReplaceStep(from.pos, Math.max(from.pos, to.pos), this.slice, this.structure);
@@ -3999,6 +4000,7 @@
       return new ReplaceStep(json.from, json.to, Slice.fromJSON(schema, json.slice), !!json.structure);
     }
   }
+  ReplaceStep.MAP_BIAS = 1;
   Step.jsonID("replace", ReplaceStep);
   class ReplaceAroundStep extends Step {
     /**
@@ -4828,6 +4830,23 @@
   }
   function deleteRange$1(tr2, from, to) {
     let $from = tr2.doc.resolve(from), $to = tr2.doc.resolve(to);
+    if ($from.parent.isTextblock && $to.parent.isTextblock && $from.start() != $to.start() && $from.parentOffset == 0 && $to.parentOffset == 0) {
+      let shared = $from.sharedDepth(to), isolated = false;
+      for (let d = $from.depth; d > shared; d--)
+        if ($from.node(d).type.spec.isolating)
+          isolated = true;
+      for (let d = $to.depth; d > shared; d--)
+        if ($to.node(d).type.spec.isolating)
+          isolated = true;
+      if (!isolated) {
+        for (let d = $from.depth; d > 0 && from == $from.start(d); d--)
+          from = $from.before(d);
+        for (let d = $to.depth; d > 0 && to == $to.start(d); d--)
+          to = $to.before(d);
+        $from = tr2.doc.resolve(from);
+        $to = tr2.doc.resolve(to);
+      }
+    }
     let covered = coveredDepths($from, $to);
     for (let i2 = 0; i2 < covered.length; i2++) {
       let depth = covered[i2], last = i2 == covered.length - 1;
@@ -9757,7 +9776,7 @@
       const targetDesc = target ? view.docView.nearestDesc(target, true) : null;
       this.target = targetDesc && targetDesc.nodeDOM.nodeType == 1 ? targetDesc.nodeDOM : null;
       let { selection } = view.state;
-      if (event.button == 0 && targetNode.type.spec.draggable && targetNode.type.spec.selectable !== false || selection instanceof NodeSelection && selection.from <= targetPos && selection.to > targetPos)
+      if (event.button == 0 && (targetNode.type.spec.draggable && targetNode.type.spec.selectable !== false || selection instanceof NodeSelection && selection.from <= targetPos && selection.to > targetPos))
         this.mightDrag = {
           node: targetNode,
           pos: targetPos,
@@ -10057,8 +10076,11 @@
   }
   const dragCopyModifier = mac$2 ? "altKey" : "ctrlKey";
   function dragMoves(view, event) {
-    let moves = view.someProp("dragCopies", (test) => !test(event));
-    return moves != null ? moves : !event[dragCopyModifier];
+    let copy2;
+    view.someProp("dragCopies", (test) => {
+      copy2 = copy2 || test(event);
+    });
+    return copy2 != null ? !copy2 : !event[dragCopyModifier];
   }
   handlers.dragstart = (view, _event) => {
     let event = _event;
@@ -10998,8 +11020,13 @@
         for (let node of added)
           if (node.nodeName == "BR" && node.parentNode) {
             let after = node.nextSibling;
-            if (after && after.nodeType == 1 && after.contentEditable == "false")
-              node.parentNode.removeChild(node);
+            while (after && after.nodeType == 1) {
+              if (after.contentEditable == "false") {
+                node.parentNode.removeChild(node);
+                break;
+              }
+              after = after.firstChild;
+            }
           }
       } else if (gecko && added.length) {
         let brs = added.filter((n) => n.nodeName == "BR");
@@ -11668,11 +11695,11 @@
     }
     updateDraggedNode(dragging, prev) {
       let sel = dragging.node, found2 = -1;
-      if (this.state.doc.nodeAt(sel.from) == sel.node) {
+      if (sel.from < this.state.doc.content.size && this.state.doc.nodeAt(sel.from) == sel.node) {
         found2 = sel.from;
       } else {
         let movedPos = sel.from + (this.state.doc.content.size - prev.doc.content.size);
-        let moved = movedPos > 0 && this.state.doc.nodeAt(movedPos);
+        let moved = movedPos > 0 && movedPos < this.state.doc.content.size && this.state.doc.nodeAt(movedPos);
         if (moved == sel.node)
           found2 = movedPos;
       }
@@ -12501,7 +12528,6 @@
     return !!findMarkInSet(marks, type, attributes);
   }
   function getMarkRange($pos, type, attributes) {
-    var _a;
     if (!$pos || !type) {
       return;
     }
@@ -12512,7 +12538,12 @@
     if (!start.node || !start.node.marks.some((mark2) => mark2.type === type)) {
       return;
     }
-    attributes = attributes || ((_a = start.node.marks[0]) == null ? void 0 : _a.attrs);
+    if (!attributes) {
+      const firstMark = start.node.marks.find((mark2) => mark2.type === type);
+      if (firstMark) {
+        attributes = firstMark.attrs;
+      }
+    }
     const mark = findMarkInSet([...start.node.marks], type, attributes);
     if (!mark) {
       return;
@@ -12543,7 +12574,7 @@
     }
     return nameOrType;
   }
-  var extendMarkRange = (typeOrName, attributes = {}) => ({ tr: tr2, state, dispatch }) => {
+  var extendMarkRange = (typeOrName, attributes) => ({ tr: tr2, state, dispatch }) => {
     const type = getMarkType(typeOrName, state.schema);
     const { doc: doc2, selection } = tr2;
     const { $from, from, to } = selection;
@@ -12854,7 +12885,7 @@
         const fromSelectionAtStart = $from.parentOffset === 0;
         const isTextSelection2 = $fromNode.isText || $fromNode.isTextblock;
         const hasContent = $fromNode.content.size > 0;
-        if (fromSelectionAtStart && isTextSelection2 && hasContent) {
+        if (fromSelectionAtStart && isTextSelection2 && hasContent && isOnlyBlockContent) {
           from = Math.max(0, from - 1);
         }
         tr2.replaceWith(from, to, newContent);
@@ -13366,6 +13397,67 @@
     });
     return extensionAttributes;
   }
+  function splitStyleDeclarations(styles) {
+    const result = [];
+    let current = "";
+    let inSingleQuote = false;
+    let inDoubleQuote = false;
+    let parenDepth = 0;
+    const length = styles.length;
+    for (let i2 = 0; i2 < length; i2 += 1) {
+      const char = styles[i2];
+      if (char === "'" && !inDoubleQuote) {
+        inSingleQuote = !inSingleQuote;
+        current += char;
+        continue;
+      }
+      if (char === '"' && !inSingleQuote) {
+        inDoubleQuote = !inDoubleQuote;
+        current += char;
+        continue;
+      }
+      if (!inSingleQuote && !inDoubleQuote) {
+        if (char === "(") {
+          parenDepth += 1;
+          current += char;
+          continue;
+        }
+        if (char === ")" && parenDepth > 0) {
+          parenDepth -= 1;
+          current += char;
+          continue;
+        }
+        if (char === ";" && parenDepth === 0) {
+          result.push(current);
+          current = "";
+          continue;
+        }
+      }
+      current += char;
+    }
+    if (current) {
+      result.push(current);
+    }
+    return result;
+  }
+  function parseStyleEntries(styles) {
+    const pairs = [];
+    const declarations = splitStyleDeclarations(styles || "");
+    const numDeclarations = declarations.length;
+    for (let i2 = 0; i2 < numDeclarations; i2 += 1) {
+      const declaration = declarations[i2];
+      const firstColonIndex = declaration.indexOf(":");
+      if (firstColonIndex === -1) {
+        continue;
+      }
+      const property = declaration.slice(0, firstColonIndex).trim();
+      const value = declaration.slice(firstColonIndex + 1).trim();
+      if (property && value) {
+        pairs.push([property, value]);
+      }
+    }
+    return pairs;
+  }
   function mergeAttributes(...objects) {
     return objects.filter((item) => !!item).reduce((items, item) => {
       const mergedAttributes = { ...items };
@@ -13381,17 +13473,7 @@
           const insertClasses = valueClasses.filter((valueClass) => !existingClasses.includes(valueClass));
           mergedAttributes[key] = [...existingClasses, ...insertClasses].join(" ");
         } else if (key === "style") {
-          const newStyles = value ? value.split(";").map((style2) => style2.trim()).filter(Boolean) : [];
-          const existingStyles = mergedAttributes[key] ? mergedAttributes[key].split(";").map((style2) => style2.trim()).filter(Boolean) : [];
-          const styleMap = /* @__PURE__ */ new Map();
-          existingStyles.forEach((style2) => {
-            const [property, val] = style2.split(":").map((part) => part.trim());
-            styleMap.set(property, val);
-          });
-          newStyles.forEach((style2) => {
-            const [property, val] = style2.split(":").map((part) => part.trim());
-            styleMap.set(property, val);
-          });
+          const styleMap = new Map([...parseStyleEntries(mergedAttributes[key]), ...parseStyleEntries(value)]);
           mergedAttributes[key] = Array.from(styleMap.entries()).map(([property, val]) => `${property}: ${val}`).join("; ");
         } else {
           mergedAttributes[key] = value;
@@ -13926,7 +14008,7 @@
         return true;
       }
       if (node.isText) {
-        return /^\s*$/m.test((_a = node.text) != null ? _a : "");
+        return !/\S/.test((_a = node.text) != null ? _a : "");
       }
     }
     if (node.isText) {
@@ -14314,6 +14396,16 @@
     tr2.join(after);
     return true;
   };
+  function createInnerSelectionForWholeDocList(tr2) {
+    const doc2 = tr2.doc;
+    const list = doc2.firstChild;
+    if (!list) {
+      return null;
+    }
+    const from = 1;
+    const to = list.nodeSize - 1;
+    return TextSelection.create(doc2, from, to);
+  }
   var toggleList = (listTypeOrName, itemTypeOrName, keepMarks, attributes = {}) => ({ editor, tr: tr2, state, dispatch, chain, commands, can }) => {
     const { extensions, splittableMarks } = editor.extensionManager;
     const listType = getNodeType(listTypeOrName, state.schema);
@@ -14326,13 +14418,36 @@
       return false;
     }
     const parentList = findParentNode((node) => isList(node.type.name, extensions))(selection);
-    if (range.depth >= 1 && parentList && range.depth - parentList.depth <= 1) {
-      if (parentList.node.type === listType) {
+    const isAllSelection = selection.from === 0 && selection.to === state.doc.content.size;
+    const topLevelNodes = state.doc.content.content;
+    const soleTopLevelNode = topLevelNodes.length === 1 ? topLevelNodes[0] : null;
+    const allSelectionList = isAllSelection && soleTopLevelNode && isList(soleTopLevelNode.type.name, extensions) ? {
+      node: soleTopLevelNode,
+      pos: 0
+    } : null;
+    const currentList = parentList != null ? parentList : allSelectionList;
+    const isInsideExistingList = !!parentList && range.depth >= 1 && range.depth - parentList.depth <= 1;
+    const hasWholeDocSelectedList = !!allSelectionList;
+    if ((isInsideExistingList || hasWholeDocSelectedList) && currentList) {
+      if (currentList.node.type === listType) {
+        if (isAllSelection && hasWholeDocSelectedList) {
+          return chain().command(({ tr: trx, dispatch: disp }) => {
+            const nextSelection = createInnerSelectionForWholeDocList(trx);
+            if (!nextSelection) {
+              return false;
+            }
+            trx.setSelection(nextSelection);
+            if (disp) {
+              disp(trx);
+            }
+            return true;
+          }).liftListItem(itemType).run();
+        }
         return commands.liftListItem(itemType);
       }
-      if (isList(parentList.node.type.name, extensions) && listType.validContent(parentList.node.content) && dispatch) {
+      if (isList(currentList.node.type.name, extensions) && listType.validContent(currentList.node.content)) {
         return chain().command(() => {
-          tr2.setNodeMarkup(parentList.pos, listType);
+          tr2.setNodeMarkup(currentList.pos, listType);
           return true;
         }).command(() => joinListBackwards(tr2, listType)).command(() => joinListForwards(tr2, listType)).run();
       }
@@ -15577,7 +15692,7 @@
             const newEnd = mapping.slice(index).map(step.to);
             const oldStart = mapping.invert().map(newStart, -1);
             const oldEnd = mapping.invert().map(newEnd);
-            const foundBeforeMark = (_a3 = nextTransaction.doc.nodeAt(newStart - 1)) == null ? void 0 : _a3.marks.some((mark) => mark.eq(step.mark));
+            const foundBeforeMark = newStart > 0 ? (_a3 = nextTransaction.doc.nodeAt(newStart - 1)) == null ? void 0 : _a3.marks.some((mark) => mark.eq(step.mark)) : false;
             const foundAfterMark = (_b3 = nextTransaction.doc.nodeAt(newEnd)) == null ? void 0 : _b3.marks.some((mark) => mark.eq(step.mark));
             this.editor.emit("delete", {
               type: "mark",
@@ -17015,7 +17130,7 @@ img.ProseMirror-separator {
       const element = document.createElement("div");
       element.dataset.resizeContainer = "";
       element.dataset.node = this.node.type.name;
-      element.style.display = "flex";
+      element.style.display = this.node.type.isInline ? "inline-flex" : "flex";
       if (this.classNames.container) {
         element.className = this.classNames.container;
       }
@@ -17353,6 +17468,9 @@ img.ProseMirror-separator {
       depth -= 1;
     }
     return false;
+  }
+  function escapeForRegEx(string) {
+    return string.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
   }
   var markdown_exports = {};
   __export$1(markdown_exports, {
@@ -17817,17 +17935,21 @@ ${renderedContent}
     const prefix = typeof prefixOrGenerator === "function" ? prefixOrGenerator(ctx) : prefixOrGenerator;
     const [content, ...children] = node.content;
     const mainContent = h2.renderChildren([content]);
-    const output = [`${prefix}${mainContent}`];
+    let output = `${prefix}${mainContent}`;
     if (children && children.length > 0) {
-      children.forEach((child) => {
-        const childContent = h2.renderChildren([child]);
-        if (childContent) {
-          const indentedChild = childContent.split("\n").map((line) => line ? h2.indent(line) : "").join("\n");
-          output.push(indentedChild);
+      children.forEach((child, index) => {
+        var _a, _b;
+        const childContent = (_b = (_a = h2.renderChild) == null ? void 0 : _a.call(h2, child, index + 1)) != null ? _b : h2.renderChildren([child]);
+        if (childContent !== void 0 && childContent !== null) {
+          const indentedChild = childContent.split("\n").map((line) => line ? h2.indent(line) : h2.indent("")).join("\n");
+          output += child.type === "paragraph" ? `
+
+${indentedChild}` : `
+${indentedChild}`;
         }
       });
     }
-    return output.join("\n");
+    return output;
   }
   function updateMarkViewAttributes(checkMark, editor, attrs = {}) {
     const { state } = editor;
@@ -17917,7 +18039,10 @@ ${renderedContent}
           }
           markEnd = range.from + startSpaces + captureGroup.length;
           tr2.addMark(range.from + startSpaces, markEnd, config.type.create(attributes || {}));
-          tr2.removeStoredMark(config.type);
+          const isMatchAtEndOfText = match.index !== void 0 && match.input !== void 0 && match.index + match[0].length >= match.input.length;
+          if (!isMatchAtEndOfText) {
+            tr2.removeStoredMark(config.type);
+          }
         }
       }
     });
@@ -18502,13 +18627,8 @@ ${renderedContent}
   }
   var PureEditorContent = class extends React$1.Component {
     constructor(props) {
-      var _a;
       super(props);
       this.editorContentRef = React$1.createRef();
-      this.initialized = false;
-      this.state = {
-        hasContentComponentInitialized: Boolean((_a = props.editor) == null ? void 0 : _a.contentComponent)
-      };
     }
     componentDidMount() {
       this.init();
@@ -18529,23 +18649,9 @@ ${renderedContent}
           element
         });
         editor.contentComponent = getInstance();
-        if (!this.state.hasContentComponentInitialized) {
-          this.unsubscribeToContentComponent = editor.contentComponent.subscribe(() => {
-            this.setState((prevState) => {
-              if (!prevState.hasContentComponentInitialized) {
-                return {
-                  hasContentComponentInitialized: true
-                };
-              }
-              return prevState;
-            });
-            if (this.unsubscribeToContentComponent) {
-              this.unsubscribeToContentComponent();
-            }
-          });
-        }
         editor.createNodeViews();
-        this.initialized = true;
+        editor.isEditorContentInitialized = true;
+        this.forceUpdate();
       }
     }
     componentWillUnmount() {
@@ -18554,14 +18660,11 @@ ${renderedContent}
       if (!editor) {
         return;
       }
-      this.initialized = false;
+      editor.isEditorContentInitialized = false;
       if (!editor.isDestroyed) {
         editor.view.setProps({
           nodeViews: {}
         });
-      }
-      if (this.unsubscribeToContentComponent) {
-        this.unsubscribeToContentComponent();
       }
       editor.contentComponent = null;
       try {
@@ -18952,6 +19055,131 @@ ${renderedContent}
       )
     );
   });
+  function isClassComponent(Component) {
+    return !!(typeof Component === "function" && Component.prototype && Component.prototype.isReactComponent);
+  }
+  function isForwardRefComponent(Component) {
+    return !!(typeof Component === "object" && Component.$$typeof && (Component.$$typeof.toString() === "Symbol(react.forward_ref)" || Component.$$typeof.description === "react.forward_ref"));
+  }
+  function isMemoComponent(Component) {
+    return !!(typeof Component === "object" && Component.$$typeof && (Component.$$typeof.toString() === "Symbol(react.memo)" || Component.$$typeof.description === "react.memo"));
+  }
+  function canReceiveRef(Component) {
+    if (isClassComponent(Component)) {
+      return true;
+    }
+    if (isForwardRefComponent(Component)) {
+      return true;
+    }
+    if (isMemoComponent(Component)) {
+      const wrappedComponent = Component.type;
+      if (wrappedComponent) {
+        return isClassComponent(wrappedComponent) || isForwardRefComponent(wrappedComponent);
+      }
+    }
+    return false;
+  }
+  function isReact19Plus() {
+    try {
+      if (React$1.version) {
+        const majorVersion = parseInt(React$1.version.split(".")[0], 10);
+        return majorVersion >= 19;
+      }
+    } catch {
+    }
+    return false;
+  }
+  var ReactRenderer = class {
+    /**
+     * Immediately creates element and renders the provided React component.
+     */
+    constructor(component, { editor, props = {}, as = "div", className = "" }) {
+      this.ref = null;
+      this.destroyed = false;
+      this.id = Math.floor(Math.random() * 4294967295).toString();
+      this.component = component;
+      this.editor = editor;
+      this.props = props;
+      this.element = document.createElement(as);
+      this.element.classList.add("react-renderer");
+      if (className) {
+        this.element.classList.add(...className.split(" "));
+      }
+      if (this.editor.isEditorContentInitialized) {
+        ReactDOM.flushSync(() => {
+          this.render();
+        });
+      } else {
+        queueMicrotask(() => {
+          if (this.destroyed) {
+            return;
+          }
+          this.render();
+        });
+      }
+    }
+    /**
+     * Render the React component.
+     */
+    render() {
+      var _a;
+      if (this.destroyed) {
+        return;
+      }
+      const Component = this.component;
+      const props = this.props;
+      const editor = this.editor;
+      const isReact19 = isReact19Plus();
+      const componentCanReceiveRef = canReceiveRef(Component);
+      const elementProps = { ...props };
+      if (elementProps.ref && !(isReact19 || componentCanReceiveRef)) {
+        delete elementProps.ref;
+      }
+      if (!elementProps.ref && (isReact19 || componentCanReceiveRef)) {
+        elementProps.ref = (ref) => {
+          this.ref = ref;
+        };
+      }
+      this.reactElement = /* @__PURE__ */ jsxRuntime.jsx(Component, { ...elementProps });
+      (_a = editor == null ? void 0 : editor.contentComponent) == null ? void 0 : _a.setRenderer(this.id, this);
+    }
+    /**
+     * Re-renders the React component with new props.
+     */
+    updateProps(props = {}) {
+      if (this.destroyed) {
+        return;
+      }
+      this.props = {
+        ...this.props,
+        ...props
+      };
+      this.render();
+    }
+    /**
+     * Destroy the React component.
+     */
+    destroy() {
+      var _a;
+      this.destroyed = true;
+      const editor = this.editor;
+      (_a = editor == null ? void 0 : editor.contentComponent) == null ? void 0 : _a.removeRenderer(this.id);
+      try {
+        if (this.element && this.element.parentNode) {
+          this.element.parentNode.removeChild(this.element);
+        }
+      } catch {
+      }
+    }
+    /**
+     * Update the attributes of the element that holds the React component.
+     */
+    updateAttributes(attributes) {
+      Object.keys(attributes).forEach((key) => {
+        this.element.setAttribute(key, attributes[key]);
+      });
+    }
+  };
   React$1.createContext({
     markViewContentRef: () => {
     }
@@ -19021,18 +19249,22 @@ ${renderedContent}
         return helpers.parseChildren([tokens[0]]);
       }
       const content = helpers.parseInline(tokens);
-      if (content.length === 1 && content[0].type === "text" && (content[0].text === EMPTY_PARAGRAPH_MARKDOWN || content[0].text === NBSP_CHAR)) {
+      const hasExplicitEmptyParagraphMarker = tokens.length === 1 && tokens[0].type === "text" && (tokens[0].raw === EMPTY_PARAGRAPH_MARKDOWN || tokens[0].text === EMPTY_PARAGRAPH_MARKDOWN || tokens[0].raw === NBSP_CHAR || tokens[0].text === NBSP_CHAR);
+      if (hasExplicitEmptyParagraphMarker && content.length === 1 && content[0].type === "text" && (content[0].text === EMPTY_PARAGRAPH_MARKDOWN || content[0].text === NBSP_CHAR)) {
         return helpers.createNode("paragraph", void 0, []);
       }
       return helpers.createNode("paragraph", void 0, content);
     },
-    renderMarkdown: (node, h2) => {
+    renderMarkdown: (node, h2, ctx) => {
+      var _a, _b;
       if (!node) {
         return "";
       }
       const content = Array.isArray(node.content) ? node.content : [];
       if (content.length === 0) {
-        return EMPTY_PARAGRAPH_MARKDOWN;
+        const previousContent = Array.isArray((_a = ctx == null ? void 0 : ctx.previousNode) == null ? void 0 : _a.content) ? ctx.previousNode.content : [];
+        const previousNodeIsEmptyParagraph = ((_b = ctx == null ? void 0 : ctx.previousNode) == null ? void 0 : _b.type) === "paragraph" && previousContent.length === 0;
+        return previousNodeIsEmptyParagraph ? EMPTY_PARAGRAPH_MARKDOWN : "";
       }
       return h2.renderChildren(content);
     },
@@ -19111,6 +19343,12 @@ ${renderedContent}
     markdownTokenName: "strong",
     parseMarkdown: (token, helpers) => {
       return helpers.applyMark("bold", helpers.parseInline(token.tokens || []));
+    },
+    markdownOptions: {
+      htmlReopen: {
+        open: "<strong>",
+        close: "</strong>"
+      }
     },
     renderMarkdown: (node, h2) => {
       return `**${h2.renderChildren(node)}**`;
@@ -19208,6 +19446,12 @@ ${renderedContent}
     markdownTokenName: "em",
     parseMarkdown: (token, helpers) => {
       return helpers.applyMark("italic", helpers.parseInline(token.tokens || []));
+    },
+    markdownOptions: {
+      htmlReopen: {
+        open: "<em>",
+        close: "</em>"
+      }
     },
     renderMarkdown: (node, h2) => {
       return `*${h2.renderChildren(node)}*`;
@@ -19517,8 +19761,8 @@ ${renderedContent}
     },
     markdownTokenName: "code",
     parseMarkdown: (token, helpers) => {
-      var _a;
-      if (((_a = token.raw) == null ? void 0 : _a.startsWith("```")) === false && token.codeBlockStyle !== "indented") {
+      var _a, _b;
+      if (((_a = token.raw) == null ? void 0 : _a.startsWith("```")) === false && ((_b = token.raw) == null ? void 0 : _b.startsWith("~~~")) === false && token.codeBlockStyle !== "indented") {
         return [];
       }
       return helpers.createNode(
@@ -19948,14 +20192,16 @@ ${renderedContent}
     },
     markdownTokenName: "list_item",
     parseMarkdown: (token, helpers) => {
+      var _a;
       if (token.type !== "list_item") {
         return [];
       }
+      const parseBlockChildren = (_a = helpers.parseBlockChildren) != null ? _a : helpers.parseChildren;
       let content = [];
       if (token.tokens && token.tokens.length > 0) {
         const hasParagraphTokens = token.tokens.some((t) => t.type === "paragraph");
         if (hasParagraphTokens) {
-          content = helpers.parseChildren(token.tokens);
+          content = parseBlockChildren(token.tokens);
         } else {
           const firstToken = token.tokens[0];
           if (firstToken && firstToken.type === "text" && firstToken.tokens && firstToken.tokens.length > 0) {
@@ -19968,11 +20214,11 @@ ${renderedContent}
             ];
             if (token.tokens.length > 1) {
               const remainingTokens = token.tokens.slice(1);
-              const additionalContent = helpers.parseChildren(remainingTokens);
+              const additionalContent = parseBlockChildren(remainingTokens);
               content.push(...additionalContent);
             }
           } else {
-            content = helpers.parseChildren(token.tokens);
+            content = parseBlockChildren(token.tokens);
           }
         }
       }
@@ -20884,7 +21130,9 @@ ${nextLine.slice(indentLevel + 2)}`;
       return /* @__PURE__ */ h("blockquote", { ...mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), children: /* @__PURE__ */ h("slot", {}) });
     },
     parseMarkdown: (token, helpers) => {
-      return helpers.createNode("blockquote", void 0, helpers.parseChildren(token.tokens || []));
+      var _a;
+      const parseBlockChildren = (_a = helpers.parseBlockChildren) != null ? _a : helpers.parseChildren;
+      return helpers.createNode("blockquote", void 0, parseBlockChildren(token.tokens || []));
     },
     renderMarkdown: (node, h2) => {
       if (!node.content) {
@@ -20892,8 +21140,9 @@ ${nextLine.slice(indentLevel + 2)}`;
       }
       const prefix = ">";
       const result = [];
-      node.content.forEach((child) => {
-        const childContent = h2.renderChildren([child]);
+      node.content.forEach((child, index) => {
+        var _a, _b;
+        const childContent = (_b = (_a = h2.renderChild) == null ? void 0 : _a.call(h2, child, index)) != null ? _b : h2.renderChildren([child]);
         const lines = childContent.split("\n");
         const linesWithPrefix = lines.map((line) => {
           if (line.trim() === "") {
@@ -23375,6 +23624,9 @@ ${prefix}
               doc2.descendants((node, pos) => {
                 const hasAnchor = anchor >= pos && anchor <= pos + node.nodeSize;
                 const isEmpty = !node.isLeaf && isNodeEmpty(node);
+                if (!node.type.isTextblock) {
+                  return this.options.includeChildren;
+                }
                 if ((hasAnchor || !this.options.showOnlyCurrent) && isEmpty) {
                   const classes = [this.options.emptyNodeClass];
                   if (isEmptyDoc) {
@@ -23530,6 +23782,631 @@ ${prefix}
       };
     }
   });
+  const SuggestionNode = Node3.create({
+    name: "suggestion",
+    group: "inline",
+    inline: true,
+    atom: true,
+    // non-editable leaf — cursor skips over, backspace deletes whole token
+    addAttributes() {
+      return {
+        id: {
+          default: null,
+          parseHTML: (el) => el.getAttribute("data-id"),
+          renderHTML: (attrs) => ({ "data-id": attrs.id })
+        },
+        label: {
+          default: null,
+          parseHTML: (el) => el.textContent.replace(/^./, ""),
+          // strip leading trigger char
+          renderHTML: () => ({})
+          // rendered as text content, not an attribute
+        },
+        trigger: {
+          default: "@",
+          parseHTML: (el) => el.getAttribute("data-trigger"),
+          renderHTML: (attrs) => ({ "data-trigger": attrs.trigger })
+        }
+      };
+    },
+    parseHTML() {
+      return [
+        {
+          tag: "span[data-trigger][data-id].rte-suggestion"
+        }
+      ];
+    },
+    renderHTML({ node, HTMLAttributes }) {
+      return [
+        "span",
+        mergeAttributes({ class: "rte-suggestion" }, HTMLAttributes),
+        `${node.attrs.trigger}${node.attrs.label}`
+      ];
+    },
+    renderText({ node }) {
+      return `${node.attrs.trigger}${node.attrs.label}`;
+    }
+  });
+  function findSuggestionMatch(config) {
+    var _a;
+    const { char, allowSpaces: allowSpacesOption, allowToIncludeChar, allowedPrefixes, startOfLine, $position } = config;
+    const allowSpaces = allowSpacesOption && !allowToIncludeChar;
+    const escapedChar = escapeForRegEx(char);
+    const suffix = new RegExp(`\\s${escapedChar}$`);
+    const prefix = startOfLine ? "^" : "";
+    const finalEscapedChar = allowToIncludeChar ? "" : escapedChar;
+    const regexp = allowSpaces ? new RegExp(`${prefix}${escapedChar}.*?(?=\\s${finalEscapedChar}|$)`, "gm") : new RegExp(`${prefix}(?:^)?${escapedChar}[^\\s${finalEscapedChar}]*`, "gm");
+    const text = ((_a = $position.nodeBefore) == null ? void 0 : _a.isText) && $position.nodeBefore.text;
+    if (!text) {
+      return null;
+    }
+    const textFrom = $position.pos - text.length;
+    const match = Array.from(text.matchAll(regexp)).pop();
+    if (!match || match.input === void 0 || match.index === void 0) {
+      return null;
+    }
+    const matchPrefix = match.input.slice(Math.max(0, match.index - 1), match.index);
+    const matchPrefixIsAllowed = new RegExp(`^[${allowedPrefixes == null ? void 0 : allowedPrefixes.join("")}\0]?$`).test(matchPrefix);
+    if (allowedPrefixes !== null && !matchPrefixIsAllowed) {
+      return null;
+    }
+    const from = textFrom + match.index;
+    let to = from + match[0].length;
+    if (allowSpaces && suffix.test(text.slice(to - 1, to + 1))) {
+      match[0] += " ";
+      to += 1;
+    }
+    if (from < $position.pos && to >= $position.pos) {
+      return {
+        range: {
+          from,
+          to
+        },
+        query: match[0].slice(char.length),
+        text: match[0]
+      };
+    }
+    return null;
+  }
+  function hasInsertedWhitespace(transaction) {
+    if (!transaction.docChanged) {
+      return false;
+    }
+    return transaction.steps.some((step) => {
+      const slice = step.slice;
+      if (!(slice == null ? void 0 : slice.content)) {
+        return false;
+      }
+      const inserted = slice.content.textBetween(0, slice.content.size, "\n");
+      return /\s/.test(inserted);
+    });
+  }
+  var SuggestionPluginKey = new PluginKey("suggestion");
+  function Suggestion({
+    pluginKey = SuggestionPluginKey,
+    editor,
+    char = "@",
+    allowSpaces = false,
+    allowToIncludeChar = false,
+    allowedPrefixes = [" "],
+    startOfLine = false,
+    decorationTag = "span",
+    decorationClass = "suggestion",
+    decorationContent = "",
+    decorationEmptyClass = "is-empty",
+    command: command2 = () => null,
+    items = () => [],
+    render = () => ({}),
+    allow = () => true,
+    findSuggestionMatch: findSuggestionMatch2 = findSuggestionMatch,
+    shouldShow,
+    shouldResetDismissed
+  }) {
+    let props;
+    const renderer = render == null ? void 0 : render();
+    const effectiveAllowSpaces = allowSpaces && !allowToIncludeChar;
+    const getAnchorClientRect = () => {
+      const pos = editor.state.selection.$anchor.pos;
+      const coords = editor.view.coordsAtPos(pos);
+      const { top, right, bottom, left } = coords;
+      try {
+        return new DOMRect(left, top, right - left, bottom - top);
+      } catch {
+        return null;
+      }
+    };
+    const clientRectFor = (view, decorationNode) => {
+      if (!decorationNode) {
+        return getAnchorClientRect;
+      }
+      return () => {
+        const state = pluginKey.getState(editor.state);
+        const decorationId = state == null ? void 0 : state.decorationId;
+        const currentDecorationNode = view.dom.querySelector(`[data-decoration-id="${decorationId}"]`);
+        return (currentDecorationNode == null ? void 0 : currentDecorationNode.getBoundingClientRect()) || null;
+      };
+    };
+    const shouldKeepDismissed = ({
+      match,
+      dismissedRange,
+      state,
+      transaction
+    }) => {
+      if (shouldResetDismissed == null ? void 0 : shouldResetDismissed({
+        editor,
+        state,
+        range: dismissedRange,
+        match,
+        transaction,
+        allowSpaces: effectiveAllowSpaces
+      })) {
+        return false;
+      }
+      if (effectiveAllowSpaces) {
+        return match.range.from === dismissedRange.from;
+      }
+      return match.range.from === dismissedRange.from && !hasInsertedWhitespace(transaction);
+    };
+    function dispatchExit(view, pluginKeyRef) {
+      var _a;
+      try {
+        const state = pluginKey.getState(view.state);
+        const decorationNode = (state == null ? void 0 : state.decorationId) ? view.dom.querySelector(`[data-decoration-id="${state.decorationId}"]`) : null;
+        const exitProps = {
+          // @ts-ignore editor is available in closure
+          editor,
+          range: (state == null ? void 0 : state.range) || { from: 0, to: 0 },
+          query: (state == null ? void 0 : state.query) || null,
+          text: (state == null ? void 0 : state.text) || null,
+          items: [],
+          command: (commandProps) => {
+            return command2({ editor, range: (state == null ? void 0 : state.range) || { from: 0, to: 0 }, props: commandProps });
+          },
+          decorationNode,
+          clientRect: clientRectFor(view, decorationNode)
+        };
+        (_a = renderer == null ? void 0 : renderer.onExit) == null ? void 0 : _a.call(renderer, exitProps);
+      } catch {
+      }
+      const tr2 = view.state.tr.setMeta(pluginKeyRef, { exit: true });
+      view.dispatch(tr2);
+    }
+    const plugin = new Plugin({
+      key: pluginKey,
+      view() {
+        return {
+          update: async (view, prevState) => {
+            var _a, _b, _c, _d, _e, _f, _g;
+            const prev = (_a = this.key) == null ? void 0 : _a.getState(prevState);
+            const next = (_b = this.key) == null ? void 0 : _b.getState(view.state);
+            const moved = prev.active && next.active && prev.range.from !== next.range.from;
+            const started = !prev.active && next.active;
+            const stopped = prev.active && !next.active;
+            const changed = !started && !stopped && prev.query !== next.query;
+            const handleStart = started || moved && changed;
+            const handleChange = changed || moved;
+            const handleExit = stopped || moved && changed;
+            if (!handleStart && !handleChange && !handleExit) {
+              return;
+            }
+            const state = handleExit && !handleStart ? prev : next;
+            const decorationNode = view.dom.querySelector(`[data-decoration-id="${state.decorationId}"]`);
+            props = {
+              editor,
+              range: state.range,
+              query: state.query,
+              text: state.text,
+              items: [],
+              command: (commandProps) => {
+                return command2({
+                  editor,
+                  range: state.range,
+                  props: commandProps
+                });
+              },
+              decorationNode,
+              clientRect: clientRectFor(view, decorationNode)
+            };
+            if (handleStart) {
+              (_c = renderer == null ? void 0 : renderer.onBeforeStart) == null ? void 0 : _c.call(renderer, props);
+            }
+            if (handleChange) {
+              (_d = renderer == null ? void 0 : renderer.onBeforeUpdate) == null ? void 0 : _d.call(renderer, props);
+            }
+            if (handleChange || handleStart) {
+              props.items = await items({
+                editor,
+                query: state.query
+              });
+            }
+            if (handleExit) {
+              (_e = renderer == null ? void 0 : renderer.onExit) == null ? void 0 : _e.call(renderer, props);
+            }
+            if (handleChange) {
+              (_f = renderer == null ? void 0 : renderer.onUpdate) == null ? void 0 : _f.call(renderer, props);
+            }
+            if (handleStart) {
+              (_g = renderer == null ? void 0 : renderer.onStart) == null ? void 0 : _g.call(renderer, props);
+            }
+          },
+          destroy: () => {
+            var _a;
+            if (!props) {
+              return;
+            }
+            (_a = renderer == null ? void 0 : renderer.onExit) == null ? void 0 : _a.call(renderer, props);
+          }
+        };
+      },
+      state: {
+        // Initialize the plugin's internal state.
+        init() {
+          const state = {
+            active: false,
+            range: {
+              from: 0,
+              to: 0
+            },
+            query: null,
+            text: null,
+            composing: false,
+            dismissedRange: null
+          };
+          return state;
+        },
+        // Apply changes to the plugin state from a view transaction.
+        apply(transaction, prev, _oldState, state) {
+          const { isEditable } = editor;
+          const { composing } = editor.view;
+          const { selection } = transaction;
+          const { empty: empty2, from } = selection;
+          const next = { ...prev };
+          const meta = transaction.getMeta(pluginKey);
+          if (meta && meta.exit) {
+            next.active = false;
+            next.decorationId = null;
+            next.range = { from: 0, to: 0 };
+            next.query = null;
+            next.text = null;
+            next.dismissedRange = prev.active ? { ...prev.range } : prev.dismissedRange;
+            return next;
+          }
+          next.composing = composing;
+          if (transaction.docChanged && next.dismissedRange !== null) {
+            next.dismissedRange = {
+              from: transaction.mapping.map(next.dismissedRange.from),
+              to: transaction.mapping.map(next.dismissedRange.to)
+            };
+          }
+          if (isEditable && (empty2 || editor.view.composing)) {
+            if ((from < prev.range.from || from > prev.range.to) && !composing && !prev.composing) {
+              next.active = false;
+            }
+            const match = findSuggestionMatch2({
+              char,
+              allowSpaces,
+              allowToIncludeChar,
+              allowedPrefixes,
+              startOfLine,
+              $position: selection.$from
+            });
+            const decorationId = `id_${Math.floor(Math.random() * 4294967295)}`;
+            if (match && allow({
+              editor,
+              state,
+              range: match.range,
+              isActive: prev.active
+            }) && (!shouldShow || shouldShow({
+              editor,
+              range: match.range,
+              query: match.query,
+              text: match.text,
+              transaction
+            }))) {
+              if (next.dismissedRange !== null && !shouldKeepDismissed({
+                match,
+                dismissedRange: next.dismissedRange,
+                state,
+                transaction
+              })) {
+                next.dismissedRange = null;
+              }
+              if (next.dismissedRange === null) {
+                next.active = true;
+                next.decorationId = prev.decorationId ? prev.decorationId : decorationId;
+                next.range = match.range;
+                next.query = match.query;
+                next.text = match.text;
+              } else {
+                next.active = false;
+              }
+            } else {
+              if (!match) {
+                next.dismissedRange = null;
+              }
+              next.active = false;
+            }
+          } else {
+            next.active = false;
+          }
+          if (!next.active) {
+            next.decorationId = null;
+            next.range = { from: 0, to: 0 };
+            next.query = null;
+            next.text = null;
+          }
+          return next;
+        }
+      },
+      props: {
+        // Call the keydown hook if suggestion is active.
+        handleKeyDown(view, event) {
+          var _a, _b;
+          const { active, range } = plugin.getState(view.state);
+          if (!active) {
+            return false;
+          }
+          if (event.key === "Escape" || event.key === "Esc") {
+            const state = plugin.getState(view.state);
+            (_a = renderer == null ? void 0 : renderer.onKeyDown) == null ? void 0 : _a.call(renderer, { view, event, range: state.range });
+            dispatchExit(view, pluginKey);
+            return true;
+          }
+          const handled = ((_b = renderer == null ? void 0 : renderer.onKeyDown) == null ? void 0 : _b.call(renderer, { view, event, range })) || false;
+          return handled;
+        },
+        // Setup decorator on the currently active suggestion.
+        decorations(state) {
+          const { active, range, decorationId, query } = plugin.getState(state);
+          if (!active) {
+            return null;
+          }
+          const isEmpty = !(query == null ? void 0 : query.length);
+          const classNames = [decorationClass];
+          if (isEmpty) {
+            classNames.push(decorationEmptyClass);
+          }
+          return DecorationSet.create(state.doc, [
+            Decoration.inline(range.from, range.to, {
+              nodeName: decorationTag,
+              class: classNames.join(" "),
+              "data-decoration-id": decorationId,
+              "data-decoration-content": decorationContent
+            })
+          ]);
+        }
+      }
+    });
+    return plugin;
+  }
+  const SuggestionDropdown = React$1.forwardRef((props, ref) => {
+    const { items, command: command2, clientRect: clientRect2, loading, renderItem, renderList } = props;
+    const [selectedIndex, setSelectedIndex] = React$1.useState(0);
+    React$1.useEffect(() => setSelectedIndex(0), [items]);
+    React$1.useImperativeHandle(ref, () => ({
+      onKeyDown: ({ event }) => {
+        if (event.key === "ArrowUp") {
+          setSelectedIndex((i2) => (i2 + items.length - 1) % items.length);
+          return true;
+        }
+        if (event.key === "ArrowDown") {
+          setSelectedIndex((i2) => (i2 + 1) % items.length);
+          return true;
+        }
+        if (event.key === "Enter") {
+          if (items[selectedIndex]) {
+            command2(items[selectedIndex]);
+          }
+          return true;
+        }
+        return false;
+      }
+    }));
+    const rect = clientRect2 == null ? void 0 : clientRect2();
+    if (!rect) return null;
+    const left = rect.left;
+    const top = rect.bottom + 6;
+    if (!isFinite(left) || !isFinite(top)) return null;
+    const style2 = {
+      position: "fixed",
+      left: `${left}px`,
+      top: `${top}px`,
+      zIndex: 200,
+      background: "var(--rte-surface, #ffffff)",
+      border: "1px solid var(--rte-border, #cbd5e0)",
+      borderRadius: "var(--rte-radius-lg, 8px)",
+      boxShadow: "var(--rte-dropdown-shadow, 0 4px 20px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.06))",
+      maxHeight: 240,
+      minWidth: 200,
+      overflowY: "auto",
+      padding: "4px 0",
+      fontFamily: "var(--rte-font-family, 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif)",
+      fontSize: "var(--rte-font-size, 14px)"
+    };
+    let content;
+    if (loading) {
+      content = /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", color: "var(--rte-text-muted, #718096)", fontSize: 13 } }, "Loading...");
+    } else if (items.length === 0) {
+      content = /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", color: "var(--rte-text-muted, #718096)", fontSize: 13 } }, "No results");
+    } else if (renderList) {
+      content = renderList({ items, selectedIndex, command: command2 });
+    } else {
+      content = items.map((item, index) => {
+        const isSelected = index === selectedIndex;
+        return /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            key: item.id,
+            type: "button",
+            onClick: () => command2(item),
+            onMouseEnter: () => setSelectedIndex(index),
+            style: {
+              display: "block",
+              width: "100%",
+              textAlign: "left",
+              padding: "8px 12px",
+              border: "none",
+              background: isSelected ? "var(--rte-suggestion-item-selected, var(--rte-color-primary-hover, #f0fbff))" : "transparent",
+              color: isSelected ? "var(--rte-suggestion-color, var(--rte-color-primary, #065666))" : "var(--rte-text, #1a202c)",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              fontSize: "inherit",
+              lineHeight: 1.4
+            }
+          },
+          renderItem ? renderItem(item, isSelected) : item.label
+        );
+      });
+    }
+    const portalTarget = typeof document !== "undefined" ? document.body : null;
+    if (!portalTarget) return null;
+    return ReactDOM.createPortal(
+      /* @__PURE__ */ React.createElement("div", { className: "rte-suggestion-dropdown", style: style2 }, content),
+      portalTarget
+    );
+  });
+  SuggestionDropdown.displayName = "SuggestionDropdown";
+  function createSuggestionPlugin(triggerConfig) {
+    const {
+      char,
+      items: fetchItems,
+      onSelect,
+      minChars = 0,
+      debounce: debounceOverride,
+      renderItem,
+      renderList
+    } = triggerConfig;
+    const pluginKey = new PluginKey(`suggestion-${char}`);
+    let isAsyncSource = null;
+    return Extension.create({
+      name: `suggestion-trigger-${char}`,
+      addProseMirrorPlugins() {
+        return [
+          Suggestion({
+            editor: this.editor,
+            char,
+            pluginKey,
+            allowSpaces: false,
+            // Only activate after minChars characters are typed after the trigger
+            allow: ({ state, range }) => {
+              try {
+                const text = state.doc.textBetween(range.from, range.to, "");
+                return text.length - 1 >= minChars;
+              } catch (error) {
+                console.error(`[brv-text-editor] Suggestion allow() failed for trigger "${char}"`, error);
+                return false;
+              }
+            },
+            // items() feeds @tiptap/suggestion's internal state (used for command resolution).
+            // The render layer manages its own item state via resolveItems() below.
+            // For async sources we return [] here; resolveItems handles the actual fetching.
+            items: ({ query }) => {
+              if (isAsyncSource === false) return fetchItems(query);
+              if (isAsyncSource === true) return [];
+              const result = fetchItems(query);
+              if (Array.isArray(result)) {
+                isAsyncSource = false;
+                return result;
+              }
+              isAsyncSource = true;
+              result.catch(() => {
+              });
+              return [];
+            },
+            command: ({ editor, range, props: item }) => {
+              if (!editor || editor.isDestroyed) {
+                console.error(`[brv-text-editor] Suggestion command() called on destroyed editor (trigger "${char}")`);
+                return;
+              }
+              try {
+                const success = editor.chain().focus().deleteRange(range).insertContent({
+                  type: "suggestion",
+                  attrs: {
+                    id: item.id,
+                    label: item.label,
+                    trigger: char
+                  }
+                }).insertContent(" ").run();
+                if (success) onSelect == null ? void 0 : onSelect(item);
+              } catch (error) {
+                console.error(`[brv-text-editor] Suggestion command() failed for trigger "${char}"`, error);
+              }
+            },
+            render: () => {
+              let renderer = null;
+              let debounceTimer = null;
+              let querySeq = 0;
+              const resolveItems = (query, props) => {
+                if (isAsyncSource === false) {
+                  const items = fetchItems(query);
+                  renderer.updateProps({ ...props, items, loading: false });
+                  return;
+                }
+                renderer.updateProps({ ...props, items: [], loading: true });
+                const seq = ++querySeq;
+                const delay = debounceOverride ?? 250;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                  const result = fetchItems(query);
+                  if (Array.isArray(result)) {
+                    isAsyncSource = false;
+                    if (seq === querySeq && renderer) {
+                      renderer.updateProps({ ...props, items: result, loading: false });
+                    }
+                    return;
+                  }
+                  isAsyncSource = true;
+                  result.then((items) => {
+                    if (seq === querySeq && renderer) {
+                      renderer.updateProps({ ...props, items, loading: false });
+                    }
+                  }).catch((error) => {
+                    if (seq === querySeq && renderer) {
+                      console.error(`[brv-text-editor] Suggestion items() failed for trigger "${char}"`, error);
+                      renderer.updateProps({ ...props, items: [], loading: false });
+                    }
+                  });
+                }, delay);
+              };
+              return {
+                onStart: (props) => {
+                  renderer = new ReactRenderer(SuggestionDropdown, {
+                    props: {
+                      ...props,
+                      items: [],
+                      loading: isAsyncSource !== false,
+                      renderItem,
+                      renderList
+                    },
+                    editor: props.editor
+                  });
+                  resolveItems(props.query, props);
+                },
+                onUpdate: (props) => {
+                  if (!renderer) return;
+                  renderer.updateProps({ ...props, renderItem, renderList });
+                  resolveItems(props.query, props);
+                },
+                onKeyDown: (props) => {
+                  var _a, _b;
+                  if (props.event.key === "Escape") {
+                    return true;
+                  }
+                  return ((_b = (_a = renderer == null ? void 0 : renderer.ref) == null ? void 0 : _a.onKeyDown) == null ? void 0 : _b.call(_a, props)) ?? false;
+                },
+                onExit: () => {
+                  clearTimeout(debounceTimer);
+                  renderer == null ? void 0 : renderer.destroy();
+                  renderer = null;
+                  querySeq = 0;
+                }
+              };
+            }
+          })
+        ];
+      }
+    });
+  }
   /**
    * @license lucide-react v0.576.0 - ISC
    *
@@ -24645,13 +25522,18 @@ ${prefix}
     variant = "default",
     theme = "unleashteams",
     themeVars = {},
-    toolbar = {}
+    toolbar = {},
+    triggers
   }) {
     const resolvedToolbar = React$1.useMemo(
       () => ({ ...DEFAULT_TOOLBAR, ...toolbar }),
       [toolbar]
     );
+    const triggersRef = React$1.useRef(triggers);
+    triggersRef.current = triggers;
+    const triggersKey = (triggers == null ? void 0 : triggers.map((t) => t == null ? void 0 : t.char).join(",")) ?? "";
     const extensions = React$1.useMemo(() => {
+      var _a;
       const exts = [
         index_default$f,
         index_default$e,
@@ -24688,8 +25570,26 @@ ${prefix}
       if (resolvedToolbar.history) {
         exts.push(UndoRedo);
       }
+      if ((_a = triggersRef.current) == null ? void 0 : _a.length) {
+        exts.push(SuggestionNode);
+        triggersRef.current.forEach((t, i2) => {
+          if (!t || typeof t !== "object") {
+            console.error(`[brv-text-editor] triggers[${i2}] must be an object, got ${typeof t}`);
+            return;
+          }
+          if (typeof t.char !== "string" || t.char.length === 0) {
+            console.error(`[brv-text-editor] triggers[${i2}].char must be a non-empty string, got ${JSON.stringify(t.char)}`);
+            return;
+          }
+          if (typeof t.items !== "function") {
+            console.error(`[brv-text-editor] triggers[${i2}].items must be a function, got ${typeof t.items}`);
+            return;
+          }
+          exts.push(createSuggestionPlugin(t));
+        });
+      }
       return exts;
-    }, [resolvedToolbar, placeholder]);
+    }, [resolvedToolbar, placeholder, triggersKey]);
     const editor = useEditor({
       extensions,
       content: initialContent,
@@ -24783,11 +25683,25 @@ ${prefix}
     showReactions = true,
     reactions = ["👍", "❤️", "🎉", "🙌"],
     theme = "unleashteams",
-    themeVars = {}
+    themeVars = {},
+    onSuggestionClick
   }) {
     const presetVars = RTE_THEMES[theme] ?? {};
     const resolvedVars = { ...presetVars, ...themeVars };
     const isBare = variant === "bare";
+    const handleContentClick = (e) => {
+      if (!onSuggestionClick) return;
+      const el = e.target.closest(".rte-suggestion");
+      if (el) {
+        const trigger = el.dataset.trigger;
+        const id = el.dataset.id;
+        if (!trigger || !id) return;
+        const rawText = el.textContent;
+        const label = rawText.startsWith(trigger) ? rawText.slice(trigger.length) : rawText;
+        onSuggestionClick(trigger, id, label);
+      }
+    };
+    const safeHtml = html ?? "";
     return /* @__PURE__ */ React.createElement(
       "div",
       {
@@ -24812,8 +25726,9 @@ ${prefix}
       /* @__PURE__ */ React.createElement(
         "div",
         {
-          className: "rtp-content",
-          dangerouslySetInnerHTML: { __html: html },
+          className: `rtp-content${onSuggestionClick ? " rtp-suggestions-clickable" : ""}`,
+          dangerouslySetInnerHTML: { __html: safeHtml },
+          onClick: handleContentClick,
           style: { padding: isBare ? "0" : "14px 22px 20px" }
         }
       ),
