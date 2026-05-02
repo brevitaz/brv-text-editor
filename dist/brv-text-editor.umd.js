@@ -28827,6 +28827,7 @@ ${indent}${nextMarker} ${task ? "[ ] " : ""}`);
   exports2.RichTextPreview = RichTextPreview;
   exports2.createTheme = createTheme;
   exports2.markdownToHtml = markdownToHtml;
+  exports2.markdownToInlineHtml = markdownToInlineHtml;
   Object.defineProperty(exports2, Symbol.toStringTag, { value: "Module" });
 }));
 //# sourceMappingURL=brv-text-editor.umd.js.map

@@ -28826,6 +28826,7 @@ export {
   RichTextEditor,
   RichTextPreview,
   createTheme,
-  markdownToHtml
+  markdownToHtml,
+  markdownToInlineHtml
 };
 //# sourceMappingURL=brv-text-editor.es.js.map
