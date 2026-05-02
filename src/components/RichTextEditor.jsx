@@ -867,6 +867,142 @@ function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions, ba
   )
 }
 
+// ─── Plain Text (markdown) Editor ────────────────────────────────────────────
+function PlainTextEditor({
+  initialContent, placeholder, onChange, onSubmit, onCancel, submitLabel,
+  showActions, minHeight, maxHeight, autofocus, className,
+  isBare, theme, variant, resolvedVars, inputMode,
+}) {
+  const [value, setValue] = useState(initialContent ?? '')
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (autofocus) ref.current?.focus()
+  }, [autofocus])
+
+  const handleChange = e => {
+    const v = e.target.value
+    setValue(v)
+    onChange?.(v)
+  }
+
+  const text = value ?? ''
+  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0
+  const charCount = text.length
+
+  const isInput = inputMode === 'input'
+  const Field = isInput ? 'input' : 'textarea'
+
+  const fieldStyle = {
+    width: '100%',
+    boxSizing: 'border-box',
+    border: 'none',
+    outline: 'none',
+    resize: isInput ? undefined : 'vertical',
+    padding: '12px 16px',
+    fontFamily: 'var(--rte-font-family)',
+    fontSize: 14,
+    lineHeight: 1.6,
+    color: 'var(--rte-text)',
+    background: 'transparent',
+    minHeight: isInput ? undefined : minHeight,
+    maxHeight: isInput
+      ? undefined
+      : (maxHeight === null || maxHeight === 0
+          ? undefined
+          : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
+    flex: '1 1 auto',
+    overflow: 'auto',
+  }
+
+  return (
+    <div
+      className={`rte-root editor-wrapper ${className}`.trim()}
+      data-rte-theme={theme}
+      data-rte-variant={variant}
+      data-rte-format="markdown"
+      style={{
+        ...(isBare ? {} : {
+          border: '1px solid var(--rte-border)',
+          borderRadius: 'var(--rte-radius)',
+          background: 'var(--rte-surface)',
+          overflow: 'hidden',
+          transition: 'box-shadow 0.15s, border-color 0.15s',
+        }),
+        display: 'flex',
+        flexDirection: 'column',
+        ...resolvedVars,
+      }}
+    >
+      <Field
+        ref={ref}
+        value={value}
+        onChange={handleChange}
+        placeholder={placeholder}
+        rows={isInput ? undefined : 6}
+        style={fieldStyle}
+      />
+      {showActions && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '7px 12px',
+            borderTop: '1px solid var(--rte-border-toolbar)',
+            background: 'var(--rte-surface-toolbar)',
+            borderRadius: isBare ? 0 : '0 0 calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px)',
+          }}
+        >
+          <span style={{ fontSize: 11, color: 'var(--rte-text-muted)', fontFamily: 'var(--rte-font-family)' }}>
+            {wordCount} word{wordCount !== 1 ? 's' : ''} · {charCount} char{charCount !== 1 ? 's' : ''}
+          </span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                style={{
+                  padding: '5px 14px',
+                  border: '1px solid var(--rte-border)',
+                  borderRadius: 'var(--rte-radius-sm)',
+                  background: 'var(--rte-surface)',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontFamily: 'var(--rte-font-family)',
+                  color: 'var(--rte-text-muted)',
+                  fontWeight: 500,
+                }}
+              >
+                Cancel
+              </button>
+            )}
+            {onSubmit && (
+              <button
+                type="button"
+                onClick={() => onSubmit(value)}
+                style={{
+                  padding: '5px 16px',
+                  border: 'none',
+                  borderRadius: 'var(--rte-radius-sm)',
+                  background: 'var(--rte-color-primary)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontFamily: 'var(--rte-font-family)',
+                  fontWeight: 600,
+                }}
+              >
+                {submitLabel || 'Save'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 /**
  * RichTextEditor
@@ -881,6 +1017,13 @@ function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions, ba
  * submitLabel     string   – Label for Save button (default: 'Save')
  * showActions     boolean  – Show the footer action buttons (default: true)
  * minHeight       number   – Minimum editor content height in px (default: 140)
+ * maxHeight       number|string|null
+ *                          – Maximum editor content height. Number is treated
+ *                            as px, strings are passed through as a CSS value
+ *                            (e.g. '60vh', '32rem'). Pass `null` or `0` to
+ *                            disable the cap and let the editor grow freely.
+ *                            When set, the toolbar and footer stay pinned while
+ *                            the content area scrolls (default: 420)
  * autofocus       boolean  – Autofocus on mount (default: false)
  * className       string   – Extra class applied to the outermost wrapper
  * variant         string   – 'default' | 'bare'. 'bare' removes the outer border,
@@ -903,6 +1046,7 @@ export default function RichTextEditor({
   submitLabel    = 'Save',
   showActions    = true,
   minHeight      = 140,
+  maxHeight      = 420,
   autofocus      = false,
   className      = '',
   variant        = 'default',
@@ -910,7 +1054,36 @@ export default function RichTextEditor({
   themeVars      = {},
   toolbar        = {},
   triggers,
+  format         = 'html',
+  inputMode      = 'textarea',
 }) {
+  const presetVars   = RTE_THEMES[theme] ?? {}
+  const resolvedVars = { ...presetVars, ...themeVars }
+  const isBare = variant === 'bare'
+
+  if (format === 'markdown') {
+    return (
+      <PlainTextEditor
+        initialContent={initialContent}
+        placeholder={placeholder}
+        onChange={onChange}
+        onSubmit={onSubmit}
+        onCancel={onCancel}
+        submitLabel={submitLabel}
+        showActions={showActions}
+        minHeight={minHeight}
+        maxHeight={maxHeight}
+        autofocus={autofocus}
+        className={className}
+        isBare={isBare}
+        theme={theme}
+        variant={variant}
+        resolvedVars={resolvedVars}
+        inputMode={inputMode}
+      />
+    )
+  }
+
   // Resolve toolbar groups — merge defaults with consumer overrides
   const resolvedToolbar = useMemo(
     () => ({ ...DEFAULT_TOOLBAR, ...toolbar }),
@@ -1022,12 +1195,6 @@ export default function RichTextEditor({
     },
   })
 
-  // Merge preset theme vars with instance-level overrides
-  const presetVars   = RTE_THEMES[theme] ?? {}
-  const resolvedVars = { ...presetVars, ...themeVars }
-
-  const isBare = variant === 'bare'
-
   return (
     <div
       className={`rte-root editor-wrapper ${className}`.trim()}
@@ -1049,7 +1216,15 @@ export default function RichTextEditor({
       <Toolbar editor={editor} groups={resolvedToolbar} bare={isBare} />
       <div
         className="editor-content"
-        style={{ minHeight, overflow: 'auto', cursor: 'text' }}
+        style={{
+          minHeight,
+          maxHeight: maxHeight === null || maxHeight === 0
+            ? undefined
+            : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
+          overflow: 'auto',
+          cursor: 'text',
+          flex: '1 1 auto',
+        }}
         onClick={() => editor?.commands.focus()}
       >
         <EditorContent editor={editor} style={{ height: '100%' }} />

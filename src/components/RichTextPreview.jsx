@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { RTE_THEMES } from './RichTextEditor'
+import { markdownToHtml } from '../utils/markdown'
 
 // ─── EmojiReaction ────────────────────────────────────────────────────────────
 
@@ -61,6 +62,8 @@ function EmojiReaction({ emoji }) {
  */
 export default function RichTextPreview({
   html          = '',
+  markdown,
+  format        = 'html',
   variant       = 'default',
   showReactions = true,
   reactions     = ['👍', '❤️', '🎉', '🙌'],
@@ -88,8 +91,11 @@ export default function RichTextPreview({
     }
   }
 
-  // Guard against null being passed explicitly (prop default only covers undefined)
-  const safeHtml = html ?? ''
+  // When format is markdown, convert input to HTML before rendering. Source can
+  // come from `markdown` prop or fall back to `html` (treated as raw markdown).
+  const safeHtml = format === 'markdown'
+    ? markdownToHtml(markdown ?? html ?? '')
+    : (html ?? '')
 
   return (
     <div

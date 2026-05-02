@@ -212,6 +212,8 @@ function SectionHeading({ children, badge }) {
 export default function App() {
   const [savedNotes, setSavedNotes]         = useState([])
   const [activeTheme, setActiveTheme]       = useState('unleashteams')
+  const [mdValue, setMdValue]               = useState('# Hello markdown\n\nThis is **bold**, *italic*, and `code`.\n\n- one\n- two\n- three\n\n[Link](https://example.com)')
+  const [titleValue, setTitleValue]         = useState('A short title')
 
   const handleSubmit = html => {
     const now = new Date()
@@ -362,6 +364,43 @@ export default function App() {
               onSuggestionClick={(trigger, id, label) => console.log('Clicked:', { trigger, id, label })}
             />
           ))}
+
+          {/* Markdown editor demo */}
+          <div style={{ marginTop: 32 }}>
+            <SectionHeading badge="Markdown">Markdown editor (textarea)</SectionHeading>
+            <RichTextEditor
+              format="markdown"
+              initialContent={mdValue}
+              onChange={setMdValue}
+              showActions={false}
+              minHeight={140}
+              theme={activeTheme === 'purple' ? 'unleashteams' : activeTheme}
+              themeVars={activeTheme === 'purple' ? purpleTheme : {}}
+            />
+            <div style={{ marginTop: 16 }}>
+              <SectionHeading>Markdown title (input)</SectionHeading>
+              <RichTextEditor
+                format="markdown"
+                inputMode="input"
+                initialContent={titleValue}
+                onChange={setTitleValue}
+                showActions={false}
+                placeholder="Enter title…"
+                theme={activeTheme === 'purple' ? 'unleashteams' : activeTheme}
+                themeVars={activeTheme === 'purple' ? purpleTheme : {}}
+              />
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <SectionHeading>Rendered preview</SectionHeading>
+              <RichTextPreview
+                format="markdown"
+                markdown={mdValue}
+                showReactions={false}
+                theme={activeTheme === 'purple' ? 'unleashteams' : activeTheme}
+                themeVars={activeTheme === 'purple' ? purpleTheme : {}}
+              />
+            </div>
+          </div>
 
           {/* Theming guide */}
           <div
