@@ -1094,6 +1094,127 @@ function PlainTextEditor({
     onChange?.(v)
   }
 
+  // ── Markdown editing affordances (textarea only) ────────────────────────────
+  // Use document.execCommand('insertText') when available so changes go through
+  // the browser's native undo stack. Fall back to setRangeText otherwise.
+  const insertText = (el, str) => {
+    el.focus()
+    if (document.execCommand && document.execCommand('insertText', false, str)) return
+    const start = el.selectionStart
+    const end   = el.selectionEnd
+    el.setRangeText(str, start, end, 'end')
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  }
+
+  const wrapSelection = (el, before, after = before) => {
+    const start = el.selectionStart
+    const end   = el.selectionEnd
+    const sel   = el.value.slice(start, end)
+    insertText(el, before + sel + after)
+    // Reposition caret to keep selection inside the wrappers
+    requestAnimationFrame(() => {
+      el.selectionStart = start + before.length
+      el.selectionEnd   = start + before.length + sel.length
+    })
+  }
+
+  const URL_RE = /^(https?:\/\/|mailto:|tel:)\S+$/i
+
+  const handleKeyDown = e => {
+    if (isInput) return
+    const el = e.currentTarget
+    const meta = e.metaKey || e.ctrlKey
+
+    if (meta && !e.altKey) {
+      const key = e.key.toLowerCase()
+      if (key === 'b') { e.preventDefault(); wrapSelection(el, '**'); return }
+      if (key === 'i') { e.preventDefault(); wrapSelection(el, '*');  return }
+      if (key === 'e') { e.preventDefault(); wrapSelection(el, '`');  return }
+      if (key === 'k') {
+        e.preventDefault()
+        const start = el.selectionStart, end = el.selectionEnd
+        const sel = el.value.slice(start, end) || 'text'
+        insertText(el, `[${sel}](url)`)
+        requestAnimationFrame(() => {
+          // Select the "url" placeholder so the user can immediately paste/type
+          const urlStart = start + sel.length + 3 // [sel](
+          el.selectionStart = urlStart
+          el.selectionEnd   = urlStart + 3
+        })
+        return
+      }
+    }
+
+    if (e.key === 'Enter' && !e.shiftKey && !meta) {
+      const v = el.value
+      const start = el.selectionStart
+      const lineStart = v.lastIndexOf('\n', start - 1) + 1
+      const line = v.slice(lineStart, start)
+      // Match list markers: "- ", "* ", "+ ", "- [ ] ", "1. ", with optional leading indent
+      const m = /^(\s*)([-*+]|\d+\.)\s(\[[ xX]\]\s)?/.exec(line)
+      if (m) {
+        const [, indent, marker, task] = m
+        const rest = line.slice(m[0].length)
+        // Empty list item → exit the list (delete the marker)
+        if (rest.length === 0) {
+          e.preventDefault()
+          el.selectionStart = lineStart
+          el.selectionEnd   = start
+          insertText(el, '')
+          return
+        }
+        e.preventDefault()
+        const nextMarker = /^\d+\./.test(marker)
+          ? `${parseInt(marker, 10) + 1}.`
+          : marker
+        insertText(el, `\n${indent}${nextMarker} ${task ? '[ ] ' : ''}`)
+        return
+      }
+    }
+
+    if (e.key === 'Tab') {
+      const v = el.value
+      const start = el.selectionStart
+      const lineStart = v.lastIndexOf('\n', start - 1) + 1
+      const line = v.slice(lineStart, v.indexOf('\n', start) === -1 ? v.length : v.indexOf('\n', start))
+      const inList = /^\s*([-*+]|\d+\.)\s/.test(line)
+      if (inList) {
+        e.preventDefault()
+        if (e.shiftKey) {
+          if (v.slice(lineStart, lineStart + 2) === '  ') {
+            el.selectionStart = lineStart
+            el.selectionEnd   = lineStart + 2
+            insertText(el, '')
+            // Restore caret roughly where it was
+            requestAnimationFrame(() => {
+              el.selectionStart = el.selectionEnd = Math.max(lineStart, start - 2)
+            })
+          }
+        } else {
+          el.selectionStart = el.selectionEnd = lineStart
+          insertText(el, '  ')
+          requestAnimationFrame(() => {
+            el.selectionStart = el.selectionEnd = start + 2
+          })
+        }
+        return
+      }
+    }
+  }
+
+  const handlePaste = e => {
+    if (isInput) return
+    const el = e.currentTarget
+    const start = el.selectionStart
+    const end   = el.selectionEnd
+    if (start === end) return // no selection → default paste
+    const pasted = e.clipboardData?.getData('text/plain') ?? ''
+    if (!URL_RE.test(pasted.trim())) return
+    e.preventDefault()
+    const sel = el.value.slice(start, end)
+    insertText(el, `[${sel}](${pasted.trim()})`)
+  }
+
   const text = value ?? ''
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0
   const charCount = text.length
@@ -1186,6 +1307,8 @@ function PlainTextEditor({
               ref={ref}
               value={value}
               onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               placeholder={placeholder}
               rows={isInput ? undefined : 6}
               style={fieldStyle}
@@ -1217,6 +1340,8 @@ function PlainTextEditor({
             ref={ref}
             value={value}
             onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder={placeholder}
             rows={isInput ? undefined : 6}
             style={fieldStyle}
