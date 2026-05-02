@@ -19,6 +19,7 @@ import HardBreak from '@tiptap/extension-hard-break'
 import { UndoRedo } from '@tiptap/extensions/undo-redo'
 import { Placeholder } from '@tiptap/extensions/placeholder'
 import TextAlign from '@tiptap/extension-text-align'
+import { TableKit } from '@tiptap/extension-table'
 import Callout, { CALLOUT_TYPES } from '../extensions/Callout'
 import SuggestionNode from '../extensions/suggestion/SuggestionNode'
 import createSuggestionPlugin from '../extensions/suggestion/createSuggestionPlugin'
@@ -45,6 +46,9 @@ import {
   Type,
   ChevronDown,
   MessageSquareWarning,
+  Table as TableIcon,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'
 
 // ─── Default toolbar group config ──────────────────────────────────────────
@@ -60,8 +64,10 @@ export const DEFAULT_TOOLBAR = {
   lists:      true,
   blocks:     true,
   callouts:   true,
+  tables:     true,
   media:      true,
   history:    true,
+  fullscreen: true,
 }
 
 // ─── Theme presets ──────────────────────────────────────────────────────────
@@ -570,12 +576,147 @@ function CalloutDropdown({ editor, onClose }) {
   )
 }
 
+// ─── Table Dropdown ──────────────────────────────────────────────────────────
+const TABLE_GRID_COLS = 10
+const TABLE_GRID_ROWS = 8
+const TABLE_GRID_CELL = 18
+
+function TableGridPicker({ editor, onClose }) {
+  const [hover, setHover] = useState({ rows: 0, cols: 0 })
+
+  const commit = (rows, cols) => {
+    editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run()
+    onClose()
+  }
+
+  const label = hover.rows && hover.cols
+    ? `${hover.cols} × ${hover.rows}`
+    : 'Insert table'
+
+  return (
+    <div style={{ padding: '8px 10px' }} onMouseLeave={() => setHover({ rows: 0, cols: 0 })}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${TABLE_GRID_COLS}, ${TABLE_GRID_CELL}px)`,
+          gridAutoRows: `${TABLE_GRID_CELL}px`,
+          gap: 3,
+        }}
+      >
+        {Array.from({ length: TABLE_GRID_ROWS * TABLE_GRID_COLS }).map((_, i) => {
+          const r = Math.floor(i / TABLE_GRID_COLS) + 1
+          const c = (i % TABLE_GRID_COLS) + 1
+          const active = r <= hover.rows && c <= hover.cols
+          return (
+            <div
+              key={i}
+              role="button"
+              aria-label={`${c} × ${r}`}
+              onMouseEnter={() => setHover({ rows: r, cols: c })}
+              onClick={() => commit(r, c)}
+              style={{
+                width: TABLE_GRID_CELL,
+                height: TABLE_GRID_CELL,
+                borderRadius: 3,
+                border: `1px solid ${active ? 'var(--rte-color-primary)' : 'var(--rte-border)'}`,
+                background: active ? 'var(--rte-btn-active-bg)' : 'var(--rte-surface)',
+                cursor: 'pointer',
+                transition: 'background 0.05s, border-color 0.05s',
+              }}
+            />
+          )
+        })}
+      </div>
+      <div
+        style={{
+          marginTop: 8,
+          textAlign: 'center',
+          fontSize: 12,
+          color: 'var(--rte-text-muted)',
+          fontFamily: 'var(--rte-font-family)',
+          minHeight: 16,
+        }}
+      >
+        {label}
+      </div>
+    </div>
+  )
+}
+
+function TableDropdown({ editor, onClose }) {
+  const inTable = editor.isActive('table')
+
+  const item = (label, action, disabled = false) => (
+    <button
+      key={label}
+      type="button"
+      disabled={disabled}
+      onClick={() => { action(); onClose() }}
+      style={{
+        display: 'block',
+        width: '100%',
+        textAlign: 'left',
+        padding: '7px 14px',
+        border: 'none',
+        background: 'transparent',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        fontSize: 13,
+        fontFamily: 'var(--rte-font-family)',
+        color: disabled ? 'var(--rte-btn-disabled-color)' : 'var(--rte-text)',
+        transition: 'background 0.1s',
+      }}
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = 'var(--rte-btn-hover-bg)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+    >
+      {label}
+    </button>
+  )
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 'calc(100% + 6px)',
+        left: 0,
+        zIndex: 200,
+        background: 'var(--rte-surface)',
+        border: '1px solid var(--rte-border)',
+        borderRadius: 'var(--rte-radius-lg)',
+        boxShadow: 'var(--rte-dropdown-shadow)',
+        padding: '4px 0',
+        minWidth: 200,
+      }}
+    >
+      {!inTable && <TableGridPicker editor={editor} onClose={onClose} />}
+      {inTable && (
+        <>
+          {item('Add column before', () => editor.chain().focus().addColumnBefore().run())}
+          {item('Add column after',  () => editor.chain().focus().addColumnAfter().run())}
+          {item('Delete column',     () => editor.chain().focus().deleteColumn().run())}
+          <div style={{ height: 1, background: 'var(--rte-border-subtle)', margin: '4px 0' }} />
+          {item('Add row before', () => editor.chain().focus().addRowBefore().run())}
+          {item('Add row after',  () => editor.chain().focus().addRowAfter().run())}
+          {item('Delete row',     () => editor.chain().focus().deleteRow().run())}
+          <div style={{ height: 1, background: 'var(--rte-border-subtle)', margin: '4px 0' }} />
+          {item('Toggle header row',    () => editor.chain().focus().toggleHeaderRow().run())}
+          {item('Toggle header column', () => editor.chain().focus().toggleHeaderColumn().run())}
+          {item('Merge cells',  () => editor.chain().focus().mergeCells().run())}
+          {item('Split cell',   () => editor.chain().focus().splitCell().run())}
+          <div style={{ height: 1, background: 'var(--rte-border-subtle)', margin: '4px 0' }} />
+          {item('Delete table', () => editor.chain().focus().deleteTable().run())}
+        </>
+      )}
+    </div>
+  )
+}
+
 // ─── Toolbar ─────────────────────────────────────────────────────────────────
-function Toolbar({ editor, groups, bare }) {
+function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen }) {
   const [showLinkDialog, setShowLinkDialog]     = useState(false)
   const [showImageDialog, setShowImageDialog]   = useState(false)
   const [showHeadingMenu, setShowHeadingMenu]   = useState(false)
   const [showCalloutMenu, setShowCalloutMenu]   = useState(false)
+  const [showTableMenu, setShowTableMenu]       = useState(false)
   const toolbarRef = useRef(null)
 
   const closeAll = () => {
@@ -583,6 +724,7 @@ function Toolbar({ editor, groups, bare }) {
     setShowImageDialog(false)
     setShowHeadingMenu(false)
     setShowCalloutMenu(false)
+    setShowTableMenu(false)
   }
 
   useEffect(() => {
@@ -741,6 +883,40 @@ function Toolbar({ editor, groups, bare }) {
     </div>
   ))
 
+  // Tables
+  addSection('tables', (
+    <div key="tables" style={{ position: 'relative' }}>
+      <Tooltip text="Table">
+        <button
+          type="button"
+          onClick={() => { setShowTableMenu(v => !v); setShowLinkDialog(false); setShowImageDialog(false); setShowHeadingMenu(false); setShowCalloutMenu(false) }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 3,
+            height: 28,
+            padding: '0 8px',
+            border: '1px solid var(--rte-border)',
+            borderRadius: 'var(--rte-radius-sm)',
+            background: showTableMenu || editor.isActive('table') ? 'var(--rte-btn-hover-bg)' : 'var(--rte-surface)',
+            color: editor.isActive('table') ? 'var(--rte-btn-active-color)' : 'var(--rte-text)',
+            cursor: 'pointer',
+            fontSize: 12,
+            fontFamily: 'var(--rte-font-family)',
+            fontWeight: 600,
+            minWidth: 36,
+          }}
+        >
+          <TableIcon size={13} />
+          <ChevronDown size={11} />
+        </button>
+      </Tooltip>
+      {showTableMenu && (
+        <TableDropdown editor={editor} onClose={() => setShowTableMenu(false)} />
+      )}
+    </div>
+  ))
+
   // Media (links + images)
   addSection('media', (
     <span key="media" style={{ display: 'inline-flex', gap: 2 }}>
@@ -778,6 +954,23 @@ function Toolbar({ editor, groups, bare }) {
       <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo (⌘⇧Z)"><Redo size={13} /></ToolbarButton>
     </span>
   ))
+
+  // Fullscreen
+  if (groups.fullscreen && onToggleFullscreen) {
+    if (needsDivider) sections.push(<Divider key="div-fullscreen" />)
+    sections.push(
+      <span key="fullscreen" style={{ display: 'inline-flex', gap: 2, marginLeft: 'auto' }}>
+        <ToolbarButton
+          onClick={onToggleFullscreen}
+          active={fullscreen}
+          title={fullscreen ? 'Exit fullscreen (Esc)' : 'Fullscreen'}
+        >
+          {fullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+        </ToolbarButton>
+      </span>
+    )
+    needsDivider = false
+  }
 
   return (
     <div
@@ -873,9 +1066,23 @@ function PlainTextEditor({
   initialContent, placeholder, onChange, onSubmit, onCancel, submitLabel,
   showActions, minHeight, maxHeight, autofocus, className,
   isBare, theme, variant, resolvedVars, inputMode, preview,
+  enableFullscreen,
 }) {
   const [value, setValue] = useState(initialContent ?? '')
+  const [fullscreen, setFullscreen] = useState(false)
   const ref = useRef(null)
+
+  useEffect(() => {
+    if (!fullscreen) return
+    const onKey = e => { if (e.key === 'Escape') setFullscreen(false) }
+    document.addEventListener('keydown', onKey)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [fullscreen])
 
   useEffect(() => {
     if (autofocus) ref.current?.focus()
@@ -921,14 +1128,18 @@ function PlainTextEditor({
     overflow: 'auto',
   }
 
+  const fsStyle = fullscreen
+    ? { position: 'fixed', inset: 0, zIndex: 9999, borderRadius: 0, border: 'none' }
+    : null
+
   return (
     <div
-      className={`rte-root editor-wrapper ${className}`.trim()}
+      className={`rte-root editor-wrapper${fullscreen ? ' rte-fullscreen' : ''} ${className}`.trim()}
       data-rte-theme={theme}
       data-rte-variant={variant}
       data-rte-format="markdown"
       style={{
-        ...(isBare ? {} : {
+        ...(isBare && !fullscreen ? {} : {
           border: '1px solid var(--rte-border)',
           borderRadius: 'var(--rte-radius)',
           background: 'var(--rte-surface)',
@@ -937,9 +1148,37 @@ function PlainTextEditor({
         }),
         display: 'flex',
         flexDirection: 'column',
+        position: 'relative',
         ...resolvedVars,
+        ...fsStyle,
       }}
     >
+      {enableFullscreen && (
+        <button
+          type="button"
+          onClick={() => setFullscreen(v => !v)}
+          title={fullscreen ? 'Exit fullscreen (Esc)' : 'Fullscreen'}
+          style={{
+            position: 'absolute',
+            top: 6,
+            right: 6,
+            zIndex: 1,
+            width: 26,
+            height: 26,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid var(--rte-border)',
+            borderRadius: 'var(--rte-radius-sm)',
+            background: 'var(--rte-surface)',
+            color: 'var(--rte-text-muted)',
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        >
+          {fullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+        </button>
+      )}
       {previewMode === 'split' ? (
         <div style={{ display: 'flex', flex: '1 1 auto', minHeight: 0, alignItems: isInput ? 'stretch' : undefined }}>
           <div style={{ flex: '1 1 50%', display: 'flex', borderRight: '1px solid var(--rte-border-subtle)', minWidth: 0 }}>
@@ -1122,6 +1361,7 @@ export default function RichTextEditor({
   const isBare = variant === 'bare'
 
   if (format === 'markdown') {
+    const mdToolbar = { ...DEFAULT_TOOLBAR, ...toolbar }
     return (
       <PlainTextEditor
         initialContent={initialContent}
@@ -1141,6 +1381,7 @@ export default function RichTextEditor({
         resolvedVars={resolvedVars}
         inputMode={inputMode}
         preview={preview}
+        enableFullscreen={mdToolbar.fullscreen && inputMode !== 'input'}
       />
     )
   }
@@ -1200,6 +1441,11 @@ export default function RichTextEditor({
       exts.push(Callout)
     }
 
+    // Tables
+    if (resolvedToolbar.tables) {
+      exts.push(TableKit.configure({ table: { resizable: true } }))
+    }
+
     // Media
     if (resolvedToolbar.media) {
       exts.push(
@@ -1256,13 +1502,31 @@ export default function RichTextEditor({
     },
   })
 
+  const [fullscreen, setFullscreen] = useState(false)
+
+  useEffect(() => {
+    if (!fullscreen) return
+    const onKey = e => { if (e.key === 'Escape') setFullscreen(false) }
+    document.addEventListener('keydown', onKey)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [fullscreen])
+
+  const fsStyle = fullscreen
+    ? { position: 'fixed', inset: 0, zIndex: 9999, borderRadius: 0, border: 'none', maxHeight: 'none' }
+    : null
+
   return (
     <div
-      className={`rte-root editor-wrapper ${className}`.trim()}
+      className={`rte-root editor-wrapper${fullscreen ? ' rte-fullscreen' : ''} ${className}`.trim()}
       data-rte-theme={theme}
       data-rte-variant={variant}
       style={{
-        ...(isBare ? {} : {
+        ...(isBare && !fullscreen ? {} : {
           border: '1px solid var(--rte-border)',
           borderRadius: 'var(--rte-radius)',
           background: 'var(--rte-surface)',
@@ -1272,16 +1536,25 @@ export default function RichTextEditor({
         display: 'flex',
         flexDirection: 'column',
         ...resolvedVars,
+        ...fsStyle,
       }}
     >
-      <Toolbar editor={editor} groups={resolvedToolbar} bare={isBare} />
+      <Toolbar
+        editor={editor}
+        groups={resolvedToolbar}
+        bare={isBare && !fullscreen}
+        fullscreen={fullscreen}
+        onToggleFullscreen={() => setFullscreen(v => !v)}
+      />
       <div
         className="editor-content"
         style={{
-          minHeight,
-          maxHeight: maxHeight === null || maxHeight === 0
-            ? undefined
-            : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
+          minHeight: fullscreen ? 0 : minHeight,
+          maxHeight: fullscreen
+            ? 'none'
+            : (maxHeight === null || maxHeight === 0
+                ? undefined
+                : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
           overflow: 'auto',
           cursor: 'text',
           flex: '1 1 auto',
@@ -1296,7 +1569,7 @@ export default function RichTextEditor({
         onCancel={onCancel}
         submitLabel={submitLabel}
         showActions={showActions}
-        bare={isBare}
+        bare={isBare && !fullscreen}
       />
     </div>
   )

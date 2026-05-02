@@ -25517,6 +25517,7 @@ ${prefix}
     submitLabel = "Save",
     showActions = true,
     minHeight = 140,
+    maxHeight = 420,
     autofocus = false,
     className = "",
     variant = "default",
@@ -25627,7 +25628,13 @@ ${prefix}
         "div",
         {
           className: "editor-content",
-          style: { minHeight, overflow: "auto", cursor: "text" },
+          style: {
+            minHeight,
+            maxHeight: maxHeight === null || maxHeight === 0 ? void 0 : typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
+            overflow: "auto",
+            cursor: "text",
+            flex: "1 1 auto"
+          },
           onClick: () => editor == null ? void 0 : editor.commands.focus()
         },
         /* @__PURE__ */ React.createElement(EditorContent, { editor, style: { height: "100%" } })

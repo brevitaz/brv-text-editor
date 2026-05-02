@@ -27,7 +27,28 @@ function inline(s) {
   return s
 }
 
-const BLOCK_START = /^(#{1,6}\s|>\s?|[-*+]\s+|\d+\.\s+|```|---\s*$|\*\*\*\s*$|___\s*$)/
+const BLOCK_START = /^(#{1,6}\s|>\s?|[-*+]\s+|\d+\.\s+|```|---\s*$|\*\*\*\s*$|___\s*$|\|)/
+
+const TABLE_ALIGN_ROW = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/
+const TABLE_ROW       = /^\s*\|.*\|\s*$/
+
+function splitTableRow(line) {
+  let s = line.trim()
+  if (s.startsWith('|')) s = s.slice(1)
+  if (s.endsWith('|'))   s = s.slice(0, -1)
+  return s.split('|').map(c => c.trim())
+}
+
+function alignmentsFromSeparator(line) {
+  return splitTableRow(line).map(seg => {
+    const left  = seg.startsWith(':')
+    const right = seg.endsWith(':')
+    if (left && right) return 'center'
+    if (right)         return 'right'
+    if (left)          return 'left'
+    return null
+  })
+}
 
 // Inline-only renderer for single-line contexts (e.g. titles). No block
 // constructs — just the inline tokens (bold, italic, code, links, etc.).
@@ -77,6 +98,30 @@ export function markdownToHtml(md) {
       const items = []
       while (i < lines.length && /^\d+\.\s+/.test(lines[i])) { items.push(lines[i].replace(/^\d+\.\s+/, '')); i++ }
       out.push('<ol>' + items.map(it => `<li>${inline(escapeHtml(it))}</li>`).join('') + '</ol>')
+      continue
+    }
+
+    // GFM table: header row, alignment row, then 1+ body rows
+    if (TABLE_ROW.test(line) && i + 1 < lines.length && TABLE_ALIGN_ROW.test(lines[i + 1])) {
+      const headers = splitTableRow(line)
+      const aligns  = alignmentsFromSeparator(lines[i + 1])
+      i += 2
+      const rows = []
+      while (i < lines.length && TABLE_ROW.test(lines[i])) {
+        rows.push(splitTableRow(lines[i]))
+        i++
+      }
+      const styleFor = idx => aligns[idx] ? ` style="text-align:${aligns[idx]}"` : ''
+      const thead = '<thead><tr>' +
+        headers.map((h, idx) => `<th${styleFor(idx)}>${inline(escapeHtml(h))}</th>`).join('') +
+        '</tr></thead>'
+      const tbody = '<tbody>' +
+        rows.map(r => '<tr>' +
+          headers.map((_, idx) => `<td${styleFor(idx)}>${inline(escapeHtml(r[idx] ?? ''))}</td>`).join('') +
+          '</tr>'
+        ).join('') +
+        '</tbody>'
+      out.push(`<table>${thead}${tbody}</table>`)
       continue
     }
 

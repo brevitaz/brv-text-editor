@@ -4,8 +4,8 @@
     {
       "name": "rich-text-editor",
       "runtimeExecutable": "/usr/local/bin/node",
-      "runtimeArgs": ["node_modules/.bin/vite", "--port", "5173"],
-      "port": 5173
+      "runtimeArgs": ["node_modules/.bin/vite", "--port", "5199", "--strictPort"],
+      "port": 5199
     }
   ]
 }

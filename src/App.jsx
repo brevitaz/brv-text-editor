@@ -212,7 +212,7 @@ function SectionHeading({ children, badge }) {
 export default function App() {
   const [savedNotes, setSavedNotes]         = useState([])
   const [activeTheme, setActiveTheme]       = useState('unleashteams')
-  const [mdValue, setMdValue]               = useState('# Hello markdown\n\nThis is **bold**, *italic*, and `code`.\n\n- one\n- two\n- three\n\n[Link](https://example.com)')
+  const [mdValue, setMdValue]               = useState('# Hello markdown\n\nThis is **bold**, *italic*, and `code`.\n\n- one\n- two\n- three\n\n[Link](https://example.com)\n\n| Quarter | Revenue | Growth |\n| --- | ---: | :---: |\n| Q1 | $120k | 12% |\n| Q2 | $150k | 18% |\n| Q3 | $190k | 27% |')
   const [titleValue, setTitleValue]         = useState('A short **title**')
 
   const handleSubmit = html => {
