@@ -223,18 +223,20 @@ function NotePage() {
 
 The preview updates on every keystroke. Use `RichTextPreview` with `format="markdown"` if you want a fully separate render surface (e.g. for the saved/published view).
 
-### Keyboard shortcuts (textarea only)
+### Keyboard shortcuts
 
-| Shortcut | Action |
-|---|---|
-| `Cmd/Ctrl+B` | Wrap selection in `**…**` |
-| `Cmd/Ctrl+I` | Wrap selection in `*…*` |
-| `Cmd/Ctrl+E` | Wrap selection in `` `…` `` |
-| `Cmd/Ctrl+K` | Wrap selection as `[selection](url)` with the `url` portion preselected |
-| `Enter` on a list line | Continues the list (`-`, `*`, `+`, or `1.` auto-incremented) |
-| `Enter` on an empty list marker | Exits the list (removes the marker) |
-| `Tab` / `Shift+Tab` inside a list | Indent / outdent by two spaces |
-| Paste a URL while text is selected | Replaces the selection with `[selection](pasted-url)` |
+Wrap shortcuts and smart paste work in **both** `inputMode="textarea"` and `inputMode="input"`. List-aware Enter / Tab handling only applies to the multi-line textarea (no newlines in a single-line input).
+
+| Shortcut | Mode | Action |
+|---|---|---|
+| `Cmd/Ctrl+B` | textarea + input | Wrap selection in `**…**` |
+| `Cmd/Ctrl+I` | textarea + input | Wrap selection in `*…*` |
+| `Cmd/Ctrl+E` | textarea + input | Wrap selection in `` `…` `` |
+| `Cmd/Ctrl+K` | textarea + input | Wrap selection as `[selection](url)` with the `url` portion preselected |
+| Paste a URL while text is selected | textarea + input | Replaces the selection with `[selection](pasted-url)` |
+| `Enter` on a list line | textarea | Continues the list (`-`, `*`, `+`, or `1.` auto-incremented) |
+| `Enter` on an empty list marker | textarea | Exits the list (removes the marker) |
+| `Tab` / `Shift+Tab` inside a list | textarea | Indent / outdent by two spaces |
 
 All edits route through `document.execCommand('insertText')` so the browser's native undo (`Cmd/Ctrl+Z`) stays intact.
 

@@ -28231,7 +28231,6 @@ ${prefix}
     };
     const URL_RE = /^(https?:\/\/|mailto:|tel:)\S+$/i;
     const handleKeyDown2 = (e) => {
-      if (isInput) return;
       const el = e.currentTarget;
       const meta = e.metaKey || e.ctrlKey;
       if (meta && !e.altKey) {
@@ -28264,6 +28263,7 @@ ${prefix}
           return;
         }
       }
+      if (isInput) return;
       if (e.key === "Enter" && !e.shiftKey && !meta) {
         const v = el.value;
         const start = el.selectionStart;
@@ -28317,7 +28317,6 @@ ${indent}${nextMarker} ${task ? "[ ] " : ""}`);
     };
     const handlePaste2 = (e) => {
       var _a;
-      if (isInput) return;
       const el = e.currentTarget;
       const start = el.selectionStart;
       const end = el.selectionEnd;

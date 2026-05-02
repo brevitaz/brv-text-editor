@@ -1121,10 +1121,10 @@ function PlainTextEditor({
   const URL_RE = /^(https?:\/\/|mailto:|tel:)\S+$/i
 
   const handleKeyDown = e => {
-    if (isInput) return
     const el = e.currentTarget
     const meta = e.metaKey || e.ctrlKey
 
+    // Wrap shortcuts work for both textarea and input
     if (meta && !e.altKey) {
       const key = e.key.toLowerCase()
       if (key === 'b') { e.preventDefault(); wrapSelection(el, '**'); return }
@@ -1144,6 +1144,9 @@ function PlainTextEditor({
         return
       }
     }
+
+    // List-aware Enter / Tab handling only makes sense in multi-line textareas.
+    if (isInput) return
 
     if (e.key === 'Enter' && !e.shiftKey && !meta) {
       const v = el.value
@@ -1203,7 +1206,6 @@ function PlainTextEditor({
   }
 
   const handlePaste = e => {
-    if (isInput) return
     const el = e.currentTarget
     const start = el.selectionStart
     const end   = el.selectionEnd
