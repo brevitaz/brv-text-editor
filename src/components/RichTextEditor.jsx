@@ -22,6 +22,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import Callout, { CALLOUT_TYPES } from '../extensions/Callout'
 import SuggestionNode from '../extensions/suggestion/SuggestionNode'
 import createSuggestionPlugin from '../extensions/suggestion/createSuggestionPlugin'
+import { markdownToHtml, markdownToInlineHtml } from '../utils/markdown'
 
 import {
   Bold as BoldIcon,
@@ -871,7 +872,7 @@ function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions, ba
 function PlainTextEditor({
   initialContent, placeholder, onChange, onSubmit, onCancel, submitLabel,
   showActions, minHeight, maxHeight, autofocus, className,
-  isBare, theme, variant, resolvedVars, inputMode,
+  isBare, theme, variant, resolvedVars, inputMode, preview,
 }) {
   const [value, setValue] = useState(initialContent ?? '')
   const ref = useRef(null)
@@ -892,6 +893,11 @@ function PlainTextEditor({
 
   const isInput = inputMode === 'input'
   const Field = isInput ? 'input' : 'textarea'
+  const previewMode = preview || 'none'
+  const renderedHtml = useMemo(
+    () => isInput ? markdownToInlineHtml(value) : markdownToHtml(value),
+    [value, isInput]
+  )
 
   const fieldStyle = {
     width: '100%',
@@ -934,14 +940,67 @@ function PlainTextEditor({
         ...resolvedVars,
       }}
     >
-      <Field
-        ref={ref}
-        value={value}
-        onChange={handleChange}
-        placeholder={placeholder}
-        rows={isInput ? undefined : 6}
-        style={fieldStyle}
-      />
+      {previewMode === 'split' ? (
+        <div style={{ display: 'flex', flex: '1 1 auto', minHeight: 0, alignItems: isInput ? 'stretch' : undefined }}>
+          <div style={{ flex: '1 1 50%', display: 'flex', borderRight: '1px solid var(--rte-border-subtle)', minWidth: 0 }}>
+            <Field
+              ref={ref}
+              value={value}
+              onChange={handleChange}
+              placeholder={placeholder}
+              rows={isInput ? undefined : 6}
+              style={fieldStyle}
+            />
+          </div>
+          <div
+            className="rtp-content"
+            dangerouslySetInnerHTML={{ __html: renderedHtml || '<span style="color:var(--rte-text-placeholder)">Preview</span>' }}
+            style={{
+              flex: '1 1 50%',
+              padding: isInput ? '12px 16px' : '12px 16px',
+              display: isInput ? 'flex' : undefined,
+              alignItems: isInput ? 'center' : undefined,
+              overflow: 'auto',
+              minWidth: 0,
+              minHeight: isInput ? undefined : minHeight,
+              maxHeight: isInput
+                ? undefined
+                : (maxHeight === null || maxHeight === 0
+                    ? undefined
+                    : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
+              background: 'var(--rte-surface-subtle)',
+            }}
+          />
+        </div>
+      ) : (
+        <>
+          <Field
+            ref={ref}
+            value={value}
+            onChange={handleChange}
+            placeholder={placeholder}
+            rows={isInput ? undefined : 6}
+            style={fieldStyle}
+          />
+          {previewMode === 'inline' && (
+            <div
+              className="rtp-content"
+              dangerouslySetInnerHTML={{ __html: renderedHtml || '<span style="color:var(--rte-text-placeholder)">Preview</span>' }}
+              style={{
+                padding: isInput ? '8px 16px' : '12px 16px',
+                borderTop: '1px solid var(--rte-border-subtle)',
+                background: 'var(--rte-surface-subtle)',
+                overflow: 'auto',
+                maxHeight: isInput
+                  ? undefined
+                  : (maxHeight === null || maxHeight === 0
+                      ? undefined
+                      : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
+              }}
+            />
+          )}
+        </>
+      )}
       {showActions && (
         <div
           style={{
@@ -1056,6 +1115,7 @@ export default function RichTextEditor({
   triggers,
   format         = 'html',
   inputMode      = 'textarea',
+  preview        = 'none',
 }) {
   const presetVars   = RTE_THEMES[theme] ?? {}
   const resolvedVars = { ...presetVars, ...themeVars }
@@ -1080,6 +1140,7 @@ export default function RichTextEditor({
         variant={variant}
         resolvedVars={resolvedVars}
         inputMode={inputMode}
+        preview={preview}
       />
     )
   }

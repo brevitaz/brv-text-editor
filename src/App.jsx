@@ -213,7 +213,7 @@ export default function App() {
   const [savedNotes, setSavedNotes]         = useState([])
   const [activeTheme, setActiveTheme]       = useState('unleashteams')
   const [mdValue, setMdValue]               = useState('# Hello markdown\n\nThis is **bold**, *italic*, and `code`.\n\n- one\n- two\n- three\n\n[Link](https://example.com)')
-  const [titleValue, setTitleValue]         = useState('A short title')
+  const [titleValue, setTitleValue]         = useState('A short **title**')
 
   const handleSubmit = html => {
     const now = new Date()
@@ -382,6 +382,21 @@ export default function App() {
               <RichTextEditor
                 format="markdown"
                 inputMode="input"
+                preview="inline"
+                initialContent={titleValue}
+                onChange={setTitleValue}
+                showActions={false}
+                placeholder="Enter title…"
+                theme={activeTheme === 'purple' ? 'unleashteams' : activeTheme}
+                themeVars={activeTheme === 'purple' ? purpleTheme : {}}
+              />
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <SectionHeading>Markdown title (input, split preview)</SectionHeading>
+              <RichTextEditor
+                format="markdown"
+                inputMode="input"
+                preview="split"
                 initialContent={titleValue}
                 onChange={setTitleValue}
                 showActions={false}
@@ -396,6 +411,32 @@ export default function App() {
                 format="markdown"
                 markdown={mdValue}
                 showReactions={false}
+                theme={activeTheme === 'purple' ? 'unleashteams' : activeTheme}
+                themeVars={activeTheme === 'purple' ? purpleTheme : {}}
+              />
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <SectionHeading badge="Live">Markdown editor with inline preview</SectionHeading>
+              <RichTextEditor
+                format="markdown"
+                preview="inline"
+                initialContent={mdValue}
+                onChange={setMdValue}
+                showActions={false}
+                minHeight={120}
+                theme={activeTheme === 'purple' ? 'unleashteams' : activeTheme}
+                themeVars={activeTheme === 'purple' ? purpleTheme : {}}
+              />
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <SectionHeading badge="Live">Markdown editor with split preview</SectionHeading>
+              <RichTextEditor
+                format="markdown"
+                preview="split"
+                initialContent={mdValue}
+                onChange={setMdValue}
+                showActions={false}
+                minHeight={180}
                 theme={activeTheme === 'purple' ? 'unleashteams' : activeTheme}
                 themeVars={activeTheme === 'purple' ? purpleTheme : {}}
               />

@@ -29,6 +29,12 @@ function inline(s) {
 
 const BLOCK_START = /^(#{1,6}\s|>\s?|[-*+]\s+|\d+\.\s+|```|---\s*$|\*\*\*\s*$|___\s*$)/
 
+// Inline-only renderer for single-line contexts (e.g. titles). No block
+// constructs — just the inline tokens (bold, italic, code, links, etc.).
+export function markdownToInlineHtml(md) {
+  return inline(escapeHtml(String(md ?? '')))
+}
+
 export function markdownToHtml(md) {
   if (!md) return ''
   const lines = String(md).replace(/\r\n/g, '\n').split('\n')
