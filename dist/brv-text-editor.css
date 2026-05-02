@@ -456,6 +456,64 @@
 .rte-root .rtp-content [style*="text-align: right"]  { text-align: right; }
 .rte-root .rtp-content [style*="text-align: left"]   { text-align: left; }
 
+/* ─── Tables ────────────────────────────────────────────────────────────── */
+
+.rte-root .ProseMirror table,
+.rte-root .rtp-content table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 0.75em 0;
+  overflow: hidden;
+  font-size: 0.95em;
+}
+
+.rte-root .ProseMirror table td,
+.rte-root .ProseMirror table th,
+.rte-root .rtp-content table td,
+.rte-root .rtp-content table th {
+  border: 1px solid var(--rte-border);
+  padding: 7px 10px;
+  vertical-align: top;
+  position: relative;
+  min-width: 1em;
+}
+
+.rte-root .ProseMirror table th,
+.rte-root .rtp-content table th {
+  background: var(--rte-surface-subtle);
+  font-weight: 600;
+  text-align: left;
+}
+
+.rte-root .ProseMirror table p,
+.rte-root .rtp-content table p {
+  margin: 0;
+}
+
+.rte-root .ProseMirror .tableWrapper {
+  overflow-x: auto;
+  margin: 0.75em 0;
+}
+
+.rte-root .ProseMirror .selectedCell {
+  background: var(--rte-btn-active-bg);
+}
+
+.rte-root .ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background: var(--rte-color-primary);
+  pointer-events: none;
+}
+
+.rte-root .ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+
 /* ─── Suggestion tokens (inline @mentions, #hashtags, etc.) ───────────────── */
 
 .rte-root .rte-suggestion {

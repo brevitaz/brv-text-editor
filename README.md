@@ -16,15 +16,18 @@ A fully-featured React rich text editor and preview component built on [Tiptap](
 | **Headings** | H1, H2, H3 via dropdown |
 | **Lists** | Bullet, numbered, task (checkbox) lists |
 | **Blocks** | Blockquote, fenced code block, horizontal rule |
+| **Tables** | Insert/delete rows & columns, GFM-style tables in markdown mode |
 | **Callouts** | 6 themed callout blocks — Info, Success, Warning, Danger, Tip, Note |
 | **Alignment** | Left, center, right text alignment |
 | **Media** | Insert links (with edit/remove popover) and images by URL |
 | **History** | Undo / Redo |
+| **Markdown mode** | Set `format="markdown"` to render a plain textarea/input that stores raw markdown — with optional live `inline` or `split` preview |
+| **Markdown shortcuts** | Cmd/Ctrl+B/I/E/K, Enter-continues-list, Tab indent, paste-URL-on-selection |
 | **Configurable toolbar** | Enable/disable toolbar groups via the `toolbar` prop |
 | **Word count** | Live character and word count in the footer |
 | **Suggestion triggers** | Generic @mentions, #hashtags, or any custom trigger — sync & async, with keyboard nav |
 | **Theming** | Built-in presets + full CSS variable customisation via `createTheme()` |
-| **Preview** | `RichTextPreview` renders saved HTML in a styled card with emoji reactions |
+| **Preview** | `RichTextPreview` renders saved HTML or markdown in a styled card with emoji reactions |
 
 ---
 
@@ -125,6 +128,9 @@ function NotesPage() {
 | `theme` | `string` | `'unleashteams'` | Built-in theme preset |
 | `themeVars` | `object` | `{}` | CSS variable overrides for custom theming |
 | `triggers` | `TriggerConfig[]` | `[]` | Suggestion trigger configurations (see [Suggestion Triggers](#suggestion-triggers)) |
+| `format` | `'html' \| 'markdown'` | `'html'` | Storage/rendering format. `'markdown'` switches the editor to a plain textarea/input that stores raw markdown (no Tiptap, no toolbar). See [Markdown mode](#markdown-mode). |
+| `inputMode` | `'textarea' \| 'input'` | `'textarea'` | Only used when `format="markdown"`. `'input'` renders a single-line `<input>` for titles; `'textarea'` renders a multi-line `<textarea>`. |
+| `preview` | `'none' \| 'inline' \| 'split'` | `'none'` | Only used when `format="markdown"`. `'inline'` shows the rendered preview directly below the field; `'split'` shows it side-by-side. Updates live as the user types. |
 | `className` | `string` | `''` | Additional class for the root wrapper |
 
 #### Toolbar groups
@@ -146,6 +152,7 @@ The `toolbar` prop accepts a partial object. Omitted keys default to `true`.
 | `alignment` | Left, center, right text alignment |
 | `lists` | Bullet, numbered, task lists |
 | `blocks` | Blockquote, code block, horizontal rule |
+| `tables` | Insert table, add/delete row, add/delete column, delete table |
 | `callouts` | Callout block dropdown (info, success, warning, danger, tip, note) |
 | `media` | Link and image insert |
 | `history` | Undo / redo |
@@ -165,11 +172,113 @@ Six themed callout variants are available via the callout dropdown button in the
 
 Callouts are stored as `<div data-callout="type">` in the HTML output, so they render correctly in `RichTextPreview` as well.
 
+---
+
+## Markdown mode
+
+Pass `format="markdown"` to switch the editor into a plain textarea (or single-line input) that stores **raw markdown** instead of HTML. Tiptap, the toolbar, and the rich-text extensions are bypassed entirely. `onChange` and `onSubmit` receive the raw markdown string.
+
+```jsx
+import { useState } from 'react'
+import { RichTextEditor, RichTextPreview } from '@brevitaz/brv-text-editor'
+
+function NotePage() {
+  const [md, setMd] = useState('# Hello\n\nThis is **markdown**.')
+
+  return (
+    <>
+      <RichTextEditor
+        format="markdown"
+        preview="inline"
+        initialContent={md}
+        onChange={setMd}
+      />
+      <RichTextPreview format="markdown" markdown={md} />
+    </>
+  )
+}
+```
+
+### Single-line markdown input (e.g. titles)
+
+```jsx
+<RichTextEditor
+  format="markdown"
+  inputMode="input"
+  preview="inline"
+  placeholder="Title…"
+  onChange={setTitle}
+/>
+```
+
+`inputMode="input"` renders an `<input>` element. With `preview="inline"` or `preview="split"`, the rendered output is generated via `markdownToInlineHtml` (no `<p>` wrappers) so it stays on one line.
+
+### Live preview modes
+
+| `preview` | Layout |
+|---|---|
+| `'none'` (default) | Just the textarea/input. No live preview. |
+| `'inline'` | Rendered preview pane sits **below** the field. |
+| `'split'` | Field on the left, rendered preview on the right (50/50). |
+
+The preview updates on every keystroke. Use `RichTextPreview` with `format="markdown"` if you want a fully separate render surface (e.g. for the saved/published view).
+
+### Keyboard shortcuts (textarea only)
+
+| Shortcut | Action |
+|---|---|
+| `Cmd/Ctrl+B` | Wrap selection in `**…**` |
+| `Cmd/Ctrl+I` | Wrap selection in `*…*` |
+| `Cmd/Ctrl+E` | Wrap selection in `` `…` `` |
+| `Cmd/Ctrl+K` | Wrap selection as `[selection](url)` with the `url` portion preselected |
+| `Enter` on a list line | Continues the list (`-`, `*`, `+`, or `1.` auto-incremented) |
+| `Enter` on an empty list marker | Exits the list (removes the marker) |
+| `Tab` / `Shift+Tab` inside a list | Indent / outdent by two spaces |
+| Paste a URL while text is selected | Replaces the selection with `[selection](pasted-url)` |
+
+All edits route through `document.execCommand('insertText')` so the browser's native undo (`Cmd/Ctrl+Z`) stays intact.
+
+### Supported markdown syntax in preview
+
+The built-in `markdownToHtml` renderer covers common CommonMark + a handful of GFM constructs:
+
+- ATX headings (`#` … `######`)
+- Emphasis (`**bold**`, `*italic*`, `__bold__`, `_italic_`, `~~strike~~`)
+- Inline code (`` `code` ``) and fenced code blocks (```` ``` ````)
+- Links `[text](url)` and images `![alt](url)`
+- Bullet (`-`, `*`, `+`) and ordered (`1.`) lists
+- Blockquotes (`>`)
+- Horizontal rules (`---`, `***`, `___`)
+- **GFM tables** with optional column alignment:
+
+  ```markdown
+  | Quarter | Revenue | Growth |
+  | ---     | ---:    | :---:  |
+  | Q1      | $120k   | 12%    |
+  ```
+
+User-supplied markdown is HTML-escaped before tokens are expanded, so raw HTML in the input is rendered as text rather than executed.
+
+### Standalone markdown helpers
+
+The renderer is exported as a standalone function in case you want to render markdown outside of `RichTextPreview`:
+
+```js
+import { markdownToHtml, markdownToInlineHtml } from '@brevitaz/brv-text-editor'
+
+const html       = markdownToHtml('# Hello\n\nWorld')
+const inlineHtml = markdownToInlineHtml('A short **title**')
+```
+
+---
+
 ### `<RichTextPreview />`
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `html` | `string` | `''` | Raw HTML string to render |
+| `html` | `string` | `''` | Raw HTML string to render (used when `format="html"`) |
+| `markdown` | `string` | — | Raw markdown string to render (used when `format="markdown"`). Falls back to `html` if not provided. |
+| `format` | `'html' \| 'markdown'` | `'html'` | Treat input as HTML or convert markdown → HTML before rendering |
 | `variant` | `string` | `'default'` | `'default'` shows the card border/shadow/background; `'bare'` removes them and strips side padding for embedding in a custom container |
 | `showReactions` | `boolean` | `true` | Whether to show the emoji reactions row |
 | `reactions` | `string[]` | `['👍','❤️','🎉','🙌']` | Emoji list for the reactions row |
