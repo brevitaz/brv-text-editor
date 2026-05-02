@@ -28338,7 +28338,18 @@ ${indent}${nextMarker} ${task ? "[ ] " : ""}`);
       () => isInput ? markdownToInlineHtml(value) : markdownToHtml(value),
       [value, isInput]
     );
-    const fieldStyle = {
+    const fieldStyle = isBare ? {
+      width: "100%",
+      boxSizing: "border-box",
+      border: "none",
+      outline: "none",
+      resize: isInput ? void 0 : "vertical",
+      background: "transparent",
+      minHeight: isInput ? void 0 : minHeight,
+      maxHeight: isInput ? void 0 : maxHeight === null || maxHeight === 0 ? void 0 : typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
+      flex: "1 1 auto",
+      overflow: "auto"
+    } : {
       width: "100%",
       boxSizing: "border-box",
       border: "none",
@@ -28354,6 +28365,35 @@ ${indent}${nextMarker} ${task ? "[ ] " : ""}`);
       maxHeight: isInput ? void 0 : maxHeight === null || maxHeight === 0 ? void 0 : typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
       flex: "1 1 auto",
       overflow: "auto"
+    };
+    const previewPaneStyleSplit = isBare ? {
+      flex: "1 1 50%",
+      display: isInput ? "flex" : void 0,
+      alignItems: isInput ? "center" : void 0,
+      overflow: "auto",
+      minWidth: 0,
+      minHeight: isInput ? void 0 : minHeight,
+      maxHeight: isInput ? void 0 : maxHeight === null || maxHeight === 0 ? void 0 : typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight
+    } : {
+      flex: "1 1 50%",
+      padding: "12px 16px",
+      display: isInput ? "flex" : void 0,
+      alignItems: isInput ? "center" : void 0,
+      overflow: "auto",
+      minWidth: 0,
+      minHeight: isInput ? void 0 : minHeight,
+      maxHeight: isInput ? void 0 : maxHeight === null || maxHeight === 0 ? void 0 : typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
+      background: "var(--rte-surface-subtle)"
+    };
+    const previewPaneStyleInline = isBare ? {
+      overflow: "auto",
+      maxHeight: isInput ? void 0 : maxHeight === null || maxHeight === 0 ? void 0 : typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight
+    } : {
+      padding: isInput ? "8px 16px" : "12px 16px",
+      borderTop: "1px solid var(--rte-border-subtle)",
+      background: "var(--rte-surface-subtle)",
+      overflow: "auto",
+      maxHeight: isInput ? void 0 : maxHeight === null || maxHeight === 0 ? void 0 : typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight
     };
     const fsStyle = fullscreen ? { position: "fixed", inset: 0, zIndex: 9999, borderRadius: 0, border: "none" } : null;
     return /* @__PURE__ */ React.createElement(
@@ -28421,17 +28461,7 @@ ${indent}${nextMarker} ${task ? "[ ] " : ""}`);
         {
           className: "rtp-content",
           dangerouslySetInnerHTML: { __html: renderedHtml || '<span style="color:var(--rte-text-placeholder)">Preview</span>' },
-          style: {
-            flex: "1 1 50%",
-            padding: isInput ? "12px 16px" : "12px 16px",
-            display: isInput ? "flex" : void 0,
-            alignItems: isInput ? "center" : void 0,
-            overflow: "auto",
-            minWidth: 0,
-            minHeight: isInput ? void 0 : minHeight,
-            maxHeight: isInput ? void 0 : maxHeight === null || maxHeight === 0 ? void 0 : typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
-            background: "var(--rte-surface-subtle)"
-          }
+          style: previewPaneStyleSplit
         }
       )) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
         Field,
@@ -28450,13 +28480,7 @@ ${indent}${nextMarker} ${task ? "[ ] " : ""}`);
         {
           className: "rtp-content",
           dangerouslySetInnerHTML: { __html: renderedHtml || '<span style="color:var(--rte-text-placeholder)">Preview</span>' },
-          style: {
-            padding: isInput ? "8px 16px" : "12px 16px",
-            borderTop: "1px solid var(--rte-border-subtle)",
-            background: "var(--rte-surface-subtle)",
-            overflow: "auto",
-            maxHeight: isInput ? void 0 : maxHeight === null || maxHeight === 0 ? void 0 : typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight
-          }
+          style: previewPaneStyleInline
         }
       )),
       showActions && /* @__PURE__ */ React.createElement(

@@ -1227,27 +1227,98 @@ function PlainTextEditor({
     [value, isInput]
   )
 
-  const fieldStyle = {
-    width: '100%',
-    boxSizing: 'border-box',
-    border: 'none',
-    outline: 'none',
-    resize: isInput ? undefined : 'vertical',
-    padding: '12px 16px',
-    fontFamily: 'var(--rte-font-family)',
-    fontSize: 14,
-    lineHeight: 1.6,
-    color: 'var(--rte-text)',
-    background: 'transparent',
-    minHeight: isInput ? undefined : minHeight,
-    maxHeight: isInput
-      ? undefined
-      : (maxHeight === null || maxHeight === 0
+  // In `bare` variant, hand styling control to the consumer's wrapper class.
+  // We only emit structural props (sizing, resize behaviour) — no padding,
+  // typography, or surface colors.
+  const fieldStyle = isBare
+    ? {
+        width: '100%',
+        boxSizing: 'border-box',
+        border: 'none',
+        outline: 'none',
+        resize: isInput ? undefined : 'vertical',
+        background: 'transparent',
+        minHeight: isInput ? undefined : minHeight,
+        maxHeight: isInput
           ? undefined
-          : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
-    flex: '1 1 auto',
-    overflow: 'auto',
-  }
+          : (maxHeight === null || maxHeight === 0
+              ? undefined
+              : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
+        flex: '1 1 auto',
+        overflow: 'auto',
+      }
+    : {
+        width: '100%',
+        boxSizing: 'border-box',
+        border: 'none',
+        outline: 'none',
+        resize: isInput ? undefined : 'vertical',
+        padding: '12px 16px',
+        fontFamily: 'var(--rte-font-family)',
+        fontSize: 14,
+        lineHeight: 1.6,
+        color: 'var(--rte-text)',
+        background: 'transparent',
+        minHeight: isInput ? undefined : minHeight,
+        maxHeight: isInput
+          ? undefined
+          : (maxHeight === null || maxHeight === 0
+              ? undefined
+              : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
+        flex: '1 1 auto',
+        overflow: 'auto',
+      }
+
+  const previewPaneStyleSplit = isBare
+    ? {
+        flex: '1 1 50%',
+        display: isInput ? 'flex' : undefined,
+        alignItems: isInput ? 'center' : undefined,
+        overflow: 'auto',
+        minWidth: 0,
+        minHeight: isInput ? undefined : minHeight,
+        maxHeight: isInput
+          ? undefined
+          : (maxHeight === null || maxHeight === 0
+              ? undefined
+              : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
+      }
+    : {
+        flex: '1 1 50%',
+        padding: '12px 16px',
+        display: isInput ? 'flex' : undefined,
+        alignItems: isInput ? 'center' : undefined,
+        overflow: 'auto',
+        minWidth: 0,
+        minHeight: isInput ? undefined : minHeight,
+        maxHeight: isInput
+          ? undefined
+          : (maxHeight === null || maxHeight === 0
+              ? undefined
+              : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
+        background: 'var(--rte-surface-subtle)',
+      }
+
+  const previewPaneStyleInline = isBare
+    ? {
+        overflow: 'auto',
+        maxHeight: isInput
+          ? undefined
+          : (maxHeight === null || maxHeight === 0
+              ? undefined
+              : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
+      }
+    : {
+        padding: isInput ? '8px 16px' : '12px 16px',
+        borderTop: '1px solid var(--rte-border-subtle)',
+        background: 'var(--rte-surface-subtle)',
+        overflow: 'auto',
+        maxHeight: isInput
+          ? undefined
+          : (maxHeight === null || maxHeight === 0
+              ? undefined
+              : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
+      }
 
   const fsStyle = fullscreen
     ? { position: 'fixed', inset: 0, zIndex: 9999, borderRadius: 0, border: 'none' }
@@ -1317,21 +1388,7 @@ function PlainTextEditor({
           <div
             className="rtp-content"
             dangerouslySetInnerHTML={{ __html: renderedHtml || '<span style="color:var(--rte-text-placeholder)">Preview</span>' }}
-            style={{
-              flex: '1 1 50%',
-              padding: isInput ? '12px 16px' : '12px 16px',
-              display: isInput ? 'flex' : undefined,
-              alignItems: isInput ? 'center' : undefined,
-              overflow: 'auto',
-              minWidth: 0,
-              minHeight: isInput ? undefined : minHeight,
-              maxHeight: isInput
-                ? undefined
-                : (maxHeight === null || maxHeight === 0
-                    ? undefined
-                    : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
-              background: 'var(--rte-surface-subtle)',
-            }}
+            style={previewPaneStyleSplit}
           />
         </div>
       ) : (
@@ -1350,17 +1407,7 @@ function PlainTextEditor({
             <div
               className="rtp-content"
               dangerouslySetInnerHTML={{ __html: renderedHtml || '<span style="color:var(--rte-text-placeholder)">Preview</span>' }}
-              style={{
-                padding: isInput ? '8px 16px' : '12px 16px',
-                borderTop: '1px solid var(--rte-border-subtle)',
-                background: 'var(--rte-surface-subtle)',
-                overflow: 'auto',
-                maxHeight: isInput
-                  ? undefined
-                  : (maxHeight === null || maxHeight === 0
-                      ? undefined
-                      : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight),
-              }}
+              style={previewPaneStyleInline}
             />
           )}
         </>

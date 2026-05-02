@@ -429,6 +429,25 @@ export default function App() {
               />
             </div>
             <div style={{ marginTop: 16 }}>
+              <SectionHeading badge="Bare">Markdown editor (variant=bare, consumer styles)</SectionHeading>
+              <div className="md-bare-host" style={{
+                border: '1px dashed #cbd5e0',
+                borderRadius: 8,
+                padding: 16,
+                background: '#fff',
+              }}>
+                <RichTextEditor
+                  format="markdown"
+                  preview="inline"
+                  variant="bare"
+                  initialContent={mdValue}
+                  onChange={setMdValue}
+                  showActions={false}
+                  minHeight={120}
+                />
+              </div>
+            </div>
+            <div style={{ marginTop: 16 }}>
               <SectionHeading badge="Live">Markdown editor with split preview</SectionHeading>
               <RichTextEditor
                 format="markdown"

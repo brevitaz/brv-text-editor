@@ -259,6 +259,36 @@ The built-in `markdownToHtml` renderer covers common CommonMark + a handful of G
 
 User-supplied markdown is HTML-escaped before tokens are expanded, so raw HTML in the input is rendered as text rather than executed.
 
+### Bare variant (consumer-controlled styling)
+
+Pass `variant="bare"` to drop **all** built-in field styling — padding, `font-size`, `line-height`, `font-family`, surface colors, the preview pane's border and background tint, and the wrapper's border and radius. Only structural props (sizing, `min-height`/`max-height`, `resize: vertical`) are emitted, so the consumer's wrapper class fully controls the look of both the textarea/input and any inline / split preview pane.
+
+```jsx
+<div className="my-editor-skin">
+  <RichTextEditor
+    format="markdown"
+    variant="bare"
+    preview="inline"
+    onChange={setMd}
+  />
+</div>
+```
+
+```css
+.my-editor-skin textarea,
+.my-editor-skin input,
+.my-editor-skin .rtp-content {
+  padding: 14px 18px;
+  font: 15px/1.7 'Inter', sans-serif;
+}
+.my-editor-skin .rtp-content {
+  border-top: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+```
+
+The same applies to `RichTextPreview` with `variant="bare"` — the rendered card chrome (border, shadow, padding, max-width) is removed so the markup renders flush inside whatever container you wrap it in.
+
 ### Standalone markdown helpers
 
 The renderer is exported as a standalone function in case you want to render markdown outside of `RichTextPreview`:
