@@ -1106,15 +1106,47 @@ function PlainTextEditor({
     el.dispatchEvent(new Event('input', { bubbles: true }))
   }
 
-  const wrapSelection = (el, before, after = before) => {
+  // Toggle a symmetric wrapper around the selection. If the selection is
+  // already wrapped (either inside or including the markers), unwrap. Otherwise
+  // wrap. Used for **bold**, *italic*, `code`, etc.
+  const toggleWrap = (el, marker) => {
+    el.focus()
+    const v   = el.value
+    const len = marker.length
     const start = el.selectionStart
     const end   = el.selectionEnd
-    const sel   = el.value.slice(start, end)
-    insertText(el, before + sel + after)
-    // Reposition caret to keep selection inside the wrappers
+    const sel   = v.slice(start, end)
+
+    // Selection includes the markers on both sides — strip them
+    if (sel.length >= 2 * len && sel.startsWith(marker) && sel.endsWith(marker)) {
+      const inner = sel.slice(len, -len)
+      insertText(el, inner)
+      requestAnimationFrame(() => {
+        el.selectionStart = start
+        el.selectionEnd   = start + inner.length
+      })
+      return
+    }
+
+    // Selection is the inner text, markers sit immediately outside — strip them
+    if (start >= len && end + len <= v.length &&
+        v.slice(start - len, start) === marker &&
+        v.slice(end, end + len) === marker) {
+      el.selectionStart = start - len
+      el.selectionEnd   = end + len
+      insertText(el, sel)
+      requestAnimationFrame(() => {
+        el.selectionStart = start - len
+        el.selectionEnd   = start - len + sel.length
+      })
+      return
+    }
+
+    // Otherwise wrap
+    insertText(el, marker + sel + marker)
     requestAnimationFrame(() => {
-      el.selectionStart = start + before.length
-      el.selectionEnd   = start + before.length + sel.length
+      el.selectionStart = start + len
+      el.selectionEnd   = start + len + sel.length
     })
   }
 
@@ -1127,9 +1159,9 @@ function PlainTextEditor({
     // Wrap shortcuts work for both textarea and input
     if (meta && !e.altKey) {
       const key = e.key.toLowerCase()
-      if (key === 'b') { e.preventDefault(); wrapSelection(el, '**'); return }
-      if (key === 'i') { e.preventDefault(); wrapSelection(el, '*');  return }
-      if (key === 'e') { e.preventDefault(); wrapSelection(el, '`');  return }
+      if (key === 'b') { e.preventDefault(); toggleWrap(el, '**'); return }
+      if (key === 'i') { e.preventDefault(); toggleWrap(el, '*');  return }
+      if (key === 'e') { e.preventDefault(); toggleWrap(el, '`');  return }
       if (key === 'k') {
         e.preventDefault()
         const start = el.selectionStart, end = el.selectionEnd

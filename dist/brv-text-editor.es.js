@@ -28218,14 +28218,36 @@ function PlainTextEditor({
     el.setRangeText(str, start, end, "end");
     el.dispatchEvent(new Event("input", { bubbles: true }));
   };
-  const wrapSelection = (el, before, after = before) => {
+  const toggleWrap2 = (el, marker) => {
+    el.focus();
+    const v = el.value;
+    const len = marker.length;
     const start = el.selectionStart;
     const end = el.selectionEnd;
-    const sel = el.value.slice(start, end);
-    insertText(el, before + sel + after);
+    const sel = v.slice(start, end);
+    if (sel.length >= 2 * len && sel.startsWith(marker) && sel.endsWith(marker)) {
+      const inner = sel.slice(len, -len);
+      insertText(el, inner);
+      requestAnimationFrame(() => {
+        el.selectionStart = start;
+        el.selectionEnd = start + inner.length;
+      });
+      return;
+    }
+    if (start >= len && end + len <= v.length && v.slice(start - len, start) === marker && v.slice(end, end + len) === marker) {
+      el.selectionStart = start - len;
+      el.selectionEnd = end + len;
+      insertText(el, sel);
+      requestAnimationFrame(() => {
+        el.selectionStart = start - len;
+        el.selectionEnd = start - len + sel.length;
+      });
+      return;
+    }
+    insertText(el, marker + sel + marker);
     requestAnimationFrame(() => {
-      el.selectionStart = start + before.length;
-      el.selectionEnd = start + before.length + sel.length;
+      el.selectionStart = start + len;
+      el.selectionEnd = start + len + sel.length;
     });
   };
   const URL_RE = /^(https?:\/\/|mailto:|tel:)\S+$/i;
@@ -28236,17 +28258,17 @@ function PlainTextEditor({
       const key = e.key.toLowerCase();
       if (key === "b") {
         e.preventDefault();
-        wrapSelection(el, "**");
+        toggleWrap2(el, "**");
         return;
       }
       if (key === "i") {
         e.preventDefault();
-        wrapSelection(el, "*");
+        toggleWrap2(el, "*");
         return;
       }
       if (key === "e") {
         e.preventDefault();
-        wrapSelection(el, "`");
+        toggleWrap2(el, "`");
         return;
       }
       if (key === "k") {

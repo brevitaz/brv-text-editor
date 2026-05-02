@@ -225,13 +225,13 @@ The preview updates on every keystroke. Use `RichTextPreview` with `format="mark
 
 ### Keyboard shortcuts
 
-Wrap shortcuts and smart paste work in **both** `inputMode="textarea"` and `inputMode="input"`. List-aware Enter / Tab handling only applies to the multi-line textarea (no newlines in a single-line input).
+Wrap shortcuts toggle — pressing `Cmd/Ctrl+B` on a selection that's already inside `**…**` (whether the selection covers the inner text or includes the markers themselves) removes the markers. Same for `Cmd/Ctrl+I` (`*`) and `Cmd/Ctrl+E` (`` ` ``). All shortcuts and smart paste work in **both** `inputMode="textarea"` and `inputMode="input"`. List-aware Enter / Tab handling only applies to the multi-line textarea (no newlines in a single-line input).
 
 | Shortcut | Mode | Action |
 |---|---|---|
-| `Cmd/Ctrl+B` | textarea + input | Wrap selection in `**…**` |
-| `Cmd/Ctrl+I` | textarea + input | Wrap selection in `*…*` |
-| `Cmd/Ctrl+E` | textarea + input | Wrap selection in `` `…` `` |
+| `Cmd/Ctrl+B` | textarea + input | Toggle `**…**` around selection (wraps if not wrapped, unwraps if already wrapped) |
+| `Cmd/Ctrl+I` | textarea + input | Toggle `*…*` around selection |
+| `Cmd/Ctrl+E` | textarea + input | Toggle `` `…` `` around selection |
 | `Cmd/Ctrl+K` | textarea + input | Wrap selection as `[selection](url)` with the `url` portion preselected |
 | Paste a URL while text is selected | textarea + input | Replaces the selection with `[selection](pasted-url)` |
 | `Enter` on a list line | textarea | Continues the list (`-`, `*`, `+`, or `1.` auto-incremented) |
