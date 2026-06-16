@@ -27897,13 +27897,16 @@ ${prefix}
       inTable && /* @__PURE__ */ React.createElement(React.Fragment, null, item("Add column before", () => editor.chain().focus().addColumnBefore().run()), item("Add column after", () => editor.chain().focus().addColumnAfter().run()), item("Delete column", () => editor.chain().focus().deleteColumn().run()), /* @__PURE__ */ React.createElement("div", { style: { height: 1, background: "var(--rte-border-subtle)", margin: "4px 0" } }), item("Add row before", () => editor.chain().focus().addRowBefore().run()), item("Add row after", () => editor.chain().focus().addRowAfter().run()), item("Delete row", () => editor.chain().focus().deleteRow().run()), /* @__PURE__ */ React.createElement("div", { style: { height: 1, background: "var(--rte-border-subtle)", margin: "4px 0" } }), item("Toggle header row", () => editor.chain().focus().toggleHeaderRow().run()), item("Toggle header column", () => editor.chain().focus().toggleHeaderColumn().run()), item("Merge cells", () => editor.chain().focus().mergeCells().run()), item("Split cell", () => editor.chain().focus().splitCell().run()), /* @__PURE__ */ React.createElement("div", { style: { height: 1, background: "var(--rte-border-subtle)", margin: "4px 0" } }), item("Delete table", () => editor.chain().focus().deleteTable().run()))
     );
   }
-  function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen }) {
+  function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen, onImageUpload }) {
     const [showLinkDialog, setShowLinkDialog] = React$1.useState(false);
     const [showImageDialog, setShowImageDialog] = React$1.useState(false);
     const [showHeadingMenu, setShowHeadingMenu] = React$1.useState(false);
     const [showCalloutMenu, setShowCalloutMenu] = React$1.useState(false);
     const [showTableMenu, setShowTableMenu] = React$1.useState(false);
     const toolbarRef = React$1.useRef(null);
+    const fileInputRef = React$1.useRef(null);
+    const [uploading, setUploading] = React$1.useState(false);
+    const [uploadError, setUploadError] = React$1.useState(null);
     const closeAll = () => {
       setShowLinkDialog(false);
       setShowImageDialog(false);
@@ -27940,6 +27943,43 @@ ${prefix}
     const handleImageInsert = (url, alt) => {
       editor.chain().focus().setImage({ src: url, alt: alt || "" }).run();
       setShowImageDialog(false);
+    };
+    const handleImageUploadStart = (file) => {
+      if (!onImageUpload) return Promise.reject(new Error("No upload handler"));
+      setUploading(true);
+      setUploadError(null);
+      return onImageUpload(file).then(({ url, attachmentId }) => {
+        setUploading(false);
+        editor.chain().focus().setImage({
+          src: url,
+          alt: file.name || ""
+        }).run();
+        if (attachmentId) {
+          const { state } = editor;
+          const { tr: tr2 } = state;
+          state.doc.descendants((node, pos) => {
+            if (node.type.name === "image" && node.attrs.src === url) {
+              tr2.setNodeAttribute(pos, "data-attachment-id", attachmentId);
+              return false;
+            }
+            return true;
+          });
+          if (tr2.steps.length > 0) editor.view.dispatch(tr2);
+        }
+      }).catch((err) => {
+        setUploading(false);
+        setUploadError((err == null ? void 0 : err.message) || "Image upload failed");
+        setTimeout(() => setUploadError(null), 5e3);
+        throw err;
+      });
+    };
+    const handleFileSelect = (e) => {
+      var _a;
+      const file = (_a = e.target.files) == null ? void 0 : _a[0];
+      if (!file) return;
+      handleImageUploadStart(file).catch(() => {
+      });
+      e.target.value = "";
     };
     const currentLink = editor.getAttributes("link").href || "";
     const sections = [];
@@ -28058,7 +28098,19 @@ ${prefix}
         title: "Insert link"
       },
       /* @__PURE__ */ React.createElement(Link, { size: 13 })
-    ), showLinkDialog && /* @__PURE__ */ React.createElement(LinkDialog, { onConfirm: handleLinkInsert, onCancel: () => setShowLinkDialog(false), initialUrl: currentLink })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement(
+    ), showLinkDialog && /* @__PURE__ */ React.createElement(LinkDialog, { onConfirm: handleLinkInsert, onCancel: () => setShowLinkDialog(false), initialUrl: currentLink })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, onImageUpload ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("input", { ref: fileInputRef, type: "file", accept: "image/*", style: { display: "none" }, onChange: handleFileSelect }), /* @__PURE__ */ React.createElement(
+      ToolbarButton,
+      {
+        onClick: () => {
+          var _a;
+          return (_a = fileInputRef.current) == null ? void 0 : _a.click();
+        },
+        active: uploading,
+        disabled: uploading,
+        title: "Insert image from file"
+      },
+      uploading ? /* @__PURE__ */ React.createElement("span", { style: { display: "inline-block", width: 12, height: 12, border: "2px solid var(--rte-text-muted)", borderTopColor: "var(--rte-color-primary)", borderRadius: "50%", animation: "rte-spin 0.6s linear infinite" } }) : /* @__PURE__ */ React.createElement(Image, { size: 13 })
+    ), uploadError && /* @__PURE__ */ React.createElement("span", { style: { position: "absolute", top: "100%", left: 0, zIndex: 201, background: "var(--rte-surface)", border: "1px solid var(--rte-border)", borderRadius: "var(--rte-radius-sm)", padding: "4px 8px", fontSize: 11, color: "var(--rte-code-color)", whiteSpace: "nowrap", marginTop: 4 } }, uploadError)) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
       ToolbarButton,
       {
         onClick: () => {
@@ -28071,7 +28123,7 @@ ${prefix}
         title: "Insert image"
       },
       /* @__PURE__ */ React.createElement(Image, { size: 13 })
-    ), showImageDialog && /* @__PURE__ */ React.createElement(ImageDialog, { onConfirm: handleImageInsert, onCancel: () => setShowImageDialog(false) }))));
+    ), showImageDialog && /* @__PURE__ */ React.createElement(ImageDialog, { onConfirm: handleImageInsert, onCancel: () => setShowImageDialog(false) })))));
     addSection("history", /* @__PURE__ */ React.createElement("span", { key: "history", style: { display: "inline-flex", gap: 2 } }, /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().undo().run(), disabled: !editor.can().undo(), title: "Undo (⌘Z)" }, /* @__PURE__ */ React.createElement(Undo, { size: 13 })), /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().redo().run(), disabled: !editor.can().redo(), title: "Redo (⌘⇧Z)" }, /* @__PURE__ */ React.createElement(Redo, { size: 13 }))));
     if (groups.fullscreen && onToggleFullscreen) {
       if (needsDivider) sections.push(/* @__PURE__ */ React.createElement(Divider, { key: "div-fullscreen" }));
@@ -28577,7 +28629,8 @@ ${indent}${nextMarker} ${task ? "[ ] " : ""}`);
     triggers,
     format = "html",
     inputMode = "textarea",
-    preview = "none"
+    preview = "none",
+    onImageUpload
   }) {
     const presetVars = RTE_THEMES[theme] ?? {};
     const resolvedVars = { ...presetVars, ...themeVars };
@@ -28728,7 +28781,8 @@ ${indent}${nextMarker} ${task ? "[ ] " : ""}`);
           groups: resolvedToolbar,
           bare: isBare && !fullscreen,
           fullscreen,
-          onToggleFullscreen: () => setFullscreen((v) => !v)
+          onToggleFullscreen: () => setFullscreen((v) => !v),
+          onImageUpload
         }
       ),
       /* @__PURE__ */ React.createElement(
@@ -28742,7 +28796,19 @@ ${indent}${nextMarker} ${task ? "[ ] " : ""}`);
             cursor: "text",
             flex: "1 1 auto"
           },
-          onClick: () => editor == null ? void 0 : editor.commands.focus()
+          onClick: () => editor == null ? void 0 : editor.commands.focus(),
+          onPaste: handleEditorPaste,
+          onDrop: handleEditorDrop,
+          onDragOver: (e) => {
+            var _a;
+            if (!onImageUpload) return;
+            const files = (_a = e.dataTransfer) == null ? void 0 : _a.files;
+            if (!files || files.length === 0) return;
+            if (Array.from(files).some((f) => f.type.startsWith("image/"))) {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "copy";
+            }
+          }
         },
         /* @__PURE__ */ React.createElement(EditorContent, { editor, style: { height: "100%" } })
       ),

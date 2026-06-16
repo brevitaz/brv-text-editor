@@ -711,13 +711,18 @@ function TableDropdown({ editor, onClose }) {
 }
 
 // ─── Toolbar ─────────────────────────────────────────────────────────────────
-function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen }) {
+function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen, onImageUpload }) {
   const [showLinkDialog, setShowLinkDialog]     = useState(false)
   const [showImageDialog, setShowImageDialog]   = useState(false)
   const [showHeadingMenu, setShowHeadingMenu]   = useState(false)
   const [showCalloutMenu, setShowCalloutMenu]   = useState(false)
   const [showTableMenu, setShowTableMenu]       = useState(false)
   const toolbarRef = useRef(null)
+
+  // UBT-108: Image upload state (when onImageUpload is provided)
+  const fileInputRef = useRef(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState(null)
 
   const closeAll = () => {
     setShowLinkDialog(false)
@@ -760,6 +765,78 @@ function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen }) {
   const handleImageInsert = (url, alt) => {
     editor.chain().focus().setImage({ src: url, alt: alt || '' }).run()
     setShowImageDialog(false)
+  }
+
+  // ── UBT-108: Image upload flow ──────────────────────────────────────────────
+  const handleImageUploadStart = (file) => {
+    if (!onImageUpload) return Promise.reject(new Error('No upload handler'))
+    setUploading(true)
+    setUploadError(null)
+
+    return onImageUpload(file)
+      .then(({ url, attachmentId }) => {
+        setUploading(false)
+        // Insert image and attach the attachment-id via setImage attrs
+        editor.chain().focus().setImage({
+          src: url,
+          alt: file.name || '',
+        }).run()
+        // Store attachment-id directly on the just-inserted node
+        if (attachmentId) {
+          const { state } = editor
+          const { tr } = state
+          state.doc.descendants((node, pos) => {
+            if (node.type.name === 'image' && node.attrs.src === url) {
+              tr.setNodeAttribute(pos, 'data-attachment-id', attachmentId)
+              return false
+            }
+            return true
+          })
+          if (tr.steps.length > 0) editor.view.dispatch(tr)
+        }
+      })
+      .catch((err) => {
+        setUploading(false)
+        setUploadError(err?.message || 'Image upload failed')
+        setTimeout(() => setUploadError(null), 5000)
+        throw err
+      })
+  }
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    handleImageUploadStart(file).catch(() => {})
+    e.target.value = ''
+  }
+
+  // Paste handler — intercept image clipboard data
+  const handleEditorPaste = (e) => {
+    if (!onImageUpload) return
+    const items = e.clipboardData?.items
+    if (!items) return
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault()
+        const file = item.getAsFile()
+        if (file) handleImageUploadStart(file).catch(() => {})
+        return
+      }
+    }
+  }
+
+  // Drop handler — intercept image file drops
+  const handleEditorDrop = (e) => {
+    if (!onImageUpload) return
+    const files = e.dataTransfer?.files
+    if (!files || files.length === 0) return
+    const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'))
+    if (imageFiles.length === 0) return
+    e.preventDefault()
+    imageFiles.reduce(
+      (chain, file) => chain.then(() => handleImageUploadStart(file).catch(() => {})),
+      Promise.resolve()
+    )
   }
 
   const currentLink = editor.getAttributes('link').href || ''
@@ -933,15 +1010,38 @@ function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen }) {
         )}
       </div>
       <div style={{ position: 'relative' }}>
-        <ToolbarButton
-          onClick={() => { setShowImageDialog(v => !v); setShowLinkDialog(false); setShowHeadingMenu(false); setShowCalloutMenu(false) }}
-          active={showImageDialog}
-          title="Insert image"
-        >
-          <ImageIcon size={13} />
-        </ToolbarButton>
-        {showImageDialog && (
-          <ImageDialog onConfirm={handleImageInsert} onCancel={() => setShowImageDialog(false)} />
+        {onImageUpload ? (
+          <>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />
+            <ToolbarButton
+              onClick={() => fileInputRef.current?.click()}
+              active={uploading}
+              disabled={uploading}
+              title="Insert image from file"
+            >
+              {uploading ? (
+                <span style={{ display:'inline-block',width:12,height:12,border:'2px solid var(--rte-text-muted)',borderTopColor:'var(--rte-color-primary)',borderRadius:'50%',animation:'rte-spin 0.6s linear infinite' }} />
+              ) : (
+                <ImageIcon size={13} />
+              )}
+            </ToolbarButton>
+            {uploadError && (
+              <span style={{ position:'absolute',top:'100%',left:0,zIndex:201,background:'var(--rte-surface)',border:'1px solid var(--rte-border)',borderRadius:'var(--rte-radius-sm)',padding:'4px 8px',fontSize:11,color:'var(--rte-code-color)',whiteSpace:'nowrap',marginTop:4 }}>{uploadError}</span>
+            )}
+          </>
+        ) : (
+          <>
+            <ToolbarButton
+              onClick={() => { setShowImageDialog(v => !v); setShowLinkDialog(false); setShowHeadingMenu(false); setShowCalloutMenu(false) }}
+              active={showImageDialog}
+              title="Insert image"
+            >
+              <ImageIcon size={13} />
+            </ToolbarButton>
+            {showImageDialog && (
+              <ImageDialog onConfirm={handleImageInsert} onCancel={() => setShowImageDialog(false)} />
+            )}
+          </>
         )}
       </div>
     </span>
@@ -1540,6 +1640,14 @@ function PlainTextEditor({
  * triggers       array    – Suggestion trigger configs. Each entry:
  *                            { char, items, onSelect?, minChars?, debounce?,
  *                              renderItem?, renderList? }
+ * onImageUpload  fn       – Consumer-supplied upload handler. When provided,
+ *                            the image toolbar button opens a native file picker
+ *                            instead of the URL dialog. Called with the selected
+ *                            File; must return Promise<{ url, attachmentId? }>.
+ *                            Paste and drop handlers also invoke this callback.
+ *                            On resolve the editor inserts <img src={url}
+ *                            data-attachment-id={attachmentId}>. On reject it
+ *                            surfaces the error and removes any placeholder.
  */
 export default function RichTextEditor({
   initialContent = '',
@@ -1561,6 +1669,7 @@ export default function RichTextEditor({
   format         = 'html',
   inputMode      = 'textarea',
   preview        = 'none',
+  onImageUpload,
 }) {
   const presetVars   = RTE_THEMES[theme] ?? {}
   const resolvedVars = { ...presetVars, ...themeVars }
@@ -1751,6 +1860,7 @@ export default function RichTextEditor({
         bare={isBare && !fullscreen}
         fullscreen={fullscreen}
         onToggleFullscreen={() => setFullscreen(v => !v)}
+        onImageUpload={onImageUpload}
       />
       <div
         className="editor-content"
@@ -1766,6 +1876,17 @@ export default function RichTextEditor({
           flex: '1 1 auto',
         }}
         onClick={() => editor?.commands.focus()}
+        onPaste={handleEditorPaste}
+        onDrop={handleEditorDrop}
+        onDragOver={(e) => {
+          if (!onImageUpload) return
+          const files = e.dataTransfer?.files
+          if (!files || files.length === 0) return
+          if (Array.from(files).some(f => f.type.startsWith('image/'))) {
+            e.preventDefault()
+            e.dataTransfer.dropEffect = 'copy'
+          }
+        }}
       >
         <EditorContent editor={editor} style={{ height: '100%' }} />
       </div>
