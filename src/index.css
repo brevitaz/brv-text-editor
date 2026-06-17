@@ -348,6 +348,10 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes rte-spin {
+  to { transform: rotate(360deg); }
+}
+
 .rte-root .rtp-content {
   font-family: var(--rte-font-family);
   font-size: var(--rte-font-size);
