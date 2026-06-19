@@ -5,9 +5,7 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [
     react({
-      // Use classic runtime (React.createElement) so the UMD build works in
-      // browsers with just the React UMD global — no jsx-runtime shim needed.
-      jsxRuntime: 'classic',
+      jsxRuntime: 'automatic',
     }),
   ],
   define: {

@@ -220,7 +220,32 @@
   max-width: 100%;
   height: auto;
   border-radius: var(--rte-radius-sm);
+  cursor: pointer;
+  border: 2px solid var(--rte-color-primary);
+  padding: 4px;
+  background: var(--rte-surface-subtle);
+  transition: opacity 0.15s, border-color 0.15s;
 }
+
+.rte-root .ProseMirror img:hover {
+  opacity: 0.8;
+  border-color: var(--rte-color-link);
+}
+
+.rtp-content img {
+  cursor: pointer;
+  border: 2px solid var(--rte-color-primary);
+  padding: 4px;
+  background: var(--rte-surface-subtle);
+  border-radius: var(--rte-radius-sm);
+  transition: opacity 0.15s, border-color 0.15s;
+}
+
+.rtp-content img:hover {
+  opacity: 0.85;
+  border-color: var(--rte-color-link);
+}
+
 
 /* Task list */
 .rte-root .ProseMirror ul[data-type="taskList"] {
@@ -351,6 +376,7 @@
 @keyframes rte-spin {
   to { transform: rotate(360deg); }
 }
+
 
 .rte-root .rtp-content {
   font-family: var(--rte-font-family);

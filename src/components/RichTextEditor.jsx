@@ -711,18 +711,13 @@ function TableDropdown({ editor, onClose }) {
 }
 
 // ─── Toolbar ─────────────────────────────────────────────────────────────────
-function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen, onImageUpload }) {
+function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen, onImageUpload, fileInputRef, uploadError, onFileSelect }) {
   const [showLinkDialog, setShowLinkDialog]     = useState(false)
   const [showImageDialog, setShowImageDialog]   = useState(false)
   const [showHeadingMenu, setShowHeadingMenu]   = useState(false)
   const [showCalloutMenu, setShowCalloutMenu]   = useState(false)
   const [showTableMenu, setShowTableMenu]       = useState(false)
   const toolbarRef = useRef(null)
-
-  // UBT-108: Image upload state (when onImageUpload is provided)
-  const fileInputRef = useRef(null)
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState(null)
 
   const closeAll = () => {
     setShowLinkDialog(false)
@@ -765,78 +760,6 @@ function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen, onImage
   const handleImageInsert = (url, alt) => {
     editor.chain().focus().setImage({ src: url, alt: alt || '' }).run()
     setShowImageDialog(false)
-  }
-
-  // ── UBT-108: Image upload flow ──────────────────────────────────────────────
-  const handleImageUploadStart = (file) => {
-    if (!onImageUpload) return Promise.reject(new Error('No upload handler'))
-    setUploading(true)
-    setUploadError(null)
-
-    return onImageUpload(file)
-      .then(({ url, attachmentId }) => {
-        setUploading(false)
-        // Insert image and attach the attachment-id via setImage attrs
-        editor.chain().focus().setImage({
-          src: url,
-          alt: file.name || '',
-        }).run()
-        // Store attachment-id directly on the just-inserted node
-        if (attachmentId) {
-          const { state } = editor
-          const { tr } = state
-          state.doc.descendants((node, pos) => {
-            if (node.type.name === 'image' && node.attrs.src === url) {
-              tr.setNodeAttribute(pos, 'data-attachment-id', attachmentId)
-              return false
-            }
-            return true
-          })
-          if (tr.steps.length > 0) editor.view.dispatch(tr)
-        }
-      })
-      .catch((err) => {
-        setUploading(false)
-        setUploadError(err?.message || 'Image upload failed')
-        setTimeout(() => setUploadError(null), 5000)
-        throw err
-      })
-  }
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    handleImageUploadStart(file).catch(() => {})
-    e.target.value = ''
-  }
-
-  // Paste handler — intercept image clipboard data
-  const handleEditorPaste = (e) => {
-    if (!onImageUpload) return
-    const items = e.clipboardData?.items
-    if (!items) return
-    for (const item of items) {
-      if (item.type.startsWith('image/')) {
-        e.preventDefault()
-        const file = item.getAsFile()
-        if (file) handleImageUploadStart(file).catch(() => {})
-        return
-      }
-    }
-  }
-
-  // Drop handler — intercept image file drops
-  const handleEditorDrop = (e) => {
-    if (!onImageUpload) return
-    const files = e.dataTransfer?.files
-    if (!files || files.length === 0) return
-    const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'))
-    if (imageFiles.length === 0) return
-    e.preventDefault()
-    imageFiles.reduce(
-      (chain, file) => chain.then(() => handleImageUploadStart(file).catch(() => {})),
-      Promise.resolve()
-    )
   }
 
   const currentLink = editor.getAttributes('link').href || ''
@@ -1012,18 +935,12 @@ function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen, onImage
       <div style={{ position: 'relative' }}>
         {onImageUpload ? (
           <>
-            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onFileSelect} />
             <ToolbarButton
               onClick={() => fileInputRef.current?.click()}
-              active={uploading}
-              disabled={uploading}
               title="Insert image from file"
             >
-              {uploading ? (
-                <span style={{ display:'inline-block',width:12,height:12,border:'2px solid var(--rte-text-muted)',borderTopColor:'var(--rte-color-primary)',borderRadius:'50%',animation:'rte-spin 0.6s linear infinite' }} />
-              ) : (
-                <ImageIcon size={13} />
-              )}
+              <ImageIcon size={13} />
             </ToolbarButton>
             {uploadError && (
               <span style={{ position:'absolute',top:'100%',left:0,zIndex:201,background:'var(--rte-surface)',border:'1px solid var(--rte-border)',borderRadius:'var(--rte-radius-sm)',padding:'4px 8px',fontSize:11,color:'var(--rte-code-color)',whiteSpace:'nowrap',marginTop:4 }}>{uploadError}</span>
@@ -1819,6 +1736,81 @@ export default function RichTextEditor({
 
   const [fullscreen, setFullscreen] = useState(false)
 
+  // Image upload state and handlers live here (not in Toolbar) so that
+  // paste/drop on the editor content div can reference them in scope
+  const fileInputRef = useRef(null)
+  const uploadErrorTimeoutRef = useRef(null)
+  const [uploadError, setUploadError] = useState(null)
+
+  // Cleanup error timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (uploadErrorTimeoutRef.current) {
+        clearTimeout(uploadErrorTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const handleImageUploadStart = (file) => {
+    if (!onImageUpload) return Promise.reject(new Error('No upload handler'))
+    setUploadError(null)
+
+    return onImageUpload(file)
+      .then(({ url }) => {
+        const filename = file.name || 'image'
+        editor.chain().focus()
+          .setImage({ src: url, alt: filename })
+          .insertContent(` <a href="${url}" target="_blank" rel="noopener noreferrer">${filename}</a>`)
+          .run()
+      })
+      .catch((err) => {
+        setUploadError(err?.message || 'Image upload failed')
+        if (uploadErrorTimeoutRef.current) {
+          clearTimeout(uploadErrorTimeoutRef.current)
+        }
+        uploadErrorTimeoutRef.current = setTimeout(() => setUploadError(null), 5000)
+        throw err
+      })
+  }
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    handleImageUploadStart(file).catch((err) => { console.error('[brv-text-editor] Image upload failed:', err) })
+    e.target.value = ''
+  }
+
+  const handleEditorPaste = (e) => {
+    if (!onImageUpload) return
+    const items = e.clipboardData?.items
+    if (!items) return
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile()
+        if (!file) {
+          console.warn('[brv-text-editor] Clipboard item has image MIME type but getAsFile() returned null')
+          continue
+        }
+        e.preventDefault()
+        handleImageUploadStart(file).catch((err) => { console.error('[brv-text-editor] Image upload failed:', err) })
+        return
+      }
+    }
+  }
+
+  const handleEditorDrop = (e) => {
+    if (!onImageUpload) return
+    const files = e.dataTransfer?.files
+    if (!files || files.length === 0) return
+    const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'))
+    if (imageFiles.length === 0) return
+    e.preventDefault()
+    imageFiles.reduce(
+      (chain, file) => chain.then(() => handleImageUploadStart(file).catch((err) => { console.error('[brv-text-editor] Image upload failed:', err) })),
+      Promise.resolve()
+    )
+  }
+
   useEffect(() => {
     if (!fullscreen) return
     const onKey = e => { if (e.key === 'Escape') setFullscreen(false) }
@@ -1861,6 +1853,9 @@ export default function RichTextEditor({
         fullscreen={fullscreen}
         onToggleFullscreen={() => setFullscreen(v => !v)}
         onImageUpload={onImageUpload}
+        fileInputRef={fileInputRef}
+        uploadError={uploadError}
+        onFileSelect={handleFileSelect}
       />
       <div
         className="editor-content"

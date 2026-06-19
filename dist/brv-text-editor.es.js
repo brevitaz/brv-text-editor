@@ -1,6 +1,6 @@
-import React$1, { useRef, useState, useDebugValue, useEffect, forwardRef, useLayoutEffect, createContext, useContext, useMemo, version, useImperativeHandle, createElement } from "react";
-import ReactDOM, { flushSync, createPortal } from "react-dom";
 import { jsxs, Fragment as Fragment$1, jsx } from "react/jsx-runtime";
+import React, { useRef, useState, useDebugValue, useEffect, forwardRef, useLayoutEffect, createContext, useContext, useMemo, version, useImperativeHandle, createElement } from "react";
+import ReactDOM, { flushSync, createPortal } from "react-dom";
 var shim = { exports: {} };
 var useSyncExternalStoreShim_production = {};
 /**
@@ -16,11 +16,11 @@ var hasRequiredUseSyncExternalStoreShim_production;
 function requireUseSyncExternalStoreShim_production() {
   if (hasRequiredUseSyncExternalStoreShim_production) return useSyncExternalStoreShim_production;
   hasRequiredUseSyncExternalStoreShim_production = 1;
-  var React2 = React$1;
+  var React$1 = React;
   function is(x, y) {
     return x === y && (0 !== x || 1 / x === 1 / y) || x !== x && y !== y;
   }
-  var objectIs = "function" === typeof Object.is ? Object.is : is, useState2 = React2.useState, useEffect2 = React2.useEffect, useLayoutEffect2 = React2.useLayoutEffect, useDebugValue2 = React2.useDebugValue;
+  var objectIs = "function" === typeof Object.is ? Object.is : is, useState2 = React$1.useState, useEffect2 = React$1.useEffect, useLayoutEffect2 = React$1.useLayoutEffect, useDebugValue2 = React$1.useDebugValue;
   function useSyncExternalStore$2(subscribe, getSnapshot) {
     var value = getSnapshot(), _useState = useState2({ inst: { value, getSnapshot } }), inst = _useState[0].inst, forceUpdate = _useState[1];
     useLayoutEffect2(
@@ -57,7 +57,7 @@ function requireUseSyncExternalStoreShim_production() {
     return getSnapshot();
   }
   var shim2 = "undefined" === typeof window || "undefined" === typeof window.document || "undefined" === typeof window.document.createElement ? useSyncExternalStore$1 : useSyncExternalStore$2;
-  useSyncExternalStoreShim_production.useSyncExternalStore = void 0 !== React2.useSyncExternalStore ? React2.useSyncExternalStore : shim2;
+  useSyncExternalStoreShim_production.useSyncExternalStore = void 0 !== React$1.useSyncExternalStore ? React$1.useSyncExternalStore : shim2;
   return useSyncExternalStoreShim_production;
 }
 var hasRequiredShim;
@@ -18497,11 +18497,11 @@ var hasRequiredWithSelector_production;
 function requireWithSelector_production() {
   if (hasRequiredWithSelector_production) return withSelector_production;
   hasRequiredWithSelector_production = 1;
-  var React2 = React$1, shim2 = requireShim();
+  var React$1 = React, shim2 = requireShim();
   function is(x, y) {
     return x === y && (0 !== x || 1 / x === 1 / y) || x !== x && y !== y;
   }
-  var objectIs = "function" === typeof Object.is ? Object.is : is, useSyncExternalStore = shim2.useSyncExternalStore, useRef2 = React2.useRef, useEffect2 = React2.useEffect, useMemo2 = React2.useMemo, useDebugValue2 = React2.useDebugValue;
+  var objectIs = "function" === typeof Object.is ? Object.is : is, useSyncExternalStore = shim2.useSyncExternalStore, useRef2 = React$1.useRef, useEffect2 = React$1.useEffect, useMemo2 = React$1.useMemo, useDebugValue2 = React$1.useDebugValue;
   withSelector_production.useSyncExternalStoreWithSelector = function(subscribe, getSnapshot, getServerSnapshot, selector, isEqual) {
     var instRef = useRef2(null);
     if (null === instRef.current) {
@@ -18624,10 +18624,10 @@ function getInstance() {
     }
   };
 }
-var PureEditorContent = class extends React$1.Component {
+var PureEditorContent = class extends React.Component {
   constructor(props) {
     super(props);
-    this.editorContentRef = React$1.createRef();
+    this.editorContentRef = React.createRef();
   }
   componentDidMount() {
     this.init();
@@ -18688,17 +18688,17 @@ var PureEditorContent = class extends React$1.Component {
 };
 var EditorContentWithKey = forwardRef(
   (props, ref) => {
-    const key = React$1.useMemo(() => {
+    const key = React.useMemo(() => {
       return Math.floor(Math.random() * 4294967295).toString();
     }, [props.editor]);
-    return React$1.createElement(PureEditorContent, {
+    return React.createElement(PureEditorContent, {
       key,
       innerRef: ref,
       ...props
     });
   }
 );
-var EditorContent = React$1.memo(EditorContentWithKey);
+var EditorContent = React.memo(EditorContentWithKey);
 var useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 var EditorStateManager = class {
   constructor(initialEditor) {
@@ -19034,7 +19034,7 @@ var ReactNodeViewContext = createContext({
   }
 });
 var useReactNodeView = () => useContext(ReactNodeViewContext);
-React$1.forwardRef((props, ref) => {
+React.forwardRef((props, ref) => {
   const { onDragStart } = useReactNodeView();
   const Tag = props.as || "div";
   return (
@@ -19179,7 +19179,7 @@ var ReactRenderer = class {
     });
   }
 };
-React$1.createContext({
+React.createContext({
   markViewContentRef: () => {
   }
 });
@@ -26550,18 +26550,17 @@ const SuggestionDropdown = forwardRef((props, ref) => {
   };
   let content;
   if (loading) {
-    content = /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", color: "var(--rte-text-muted, #718096)", fontSize: 13 } }, "Loading...");
+    content = /* @__PURE__ */ jsx("div", { style: { padding: "8px 12px", color: "var(--rte-text-muted, #718096)", fontSize: 13 }, children: "Loading..." });
   } else if (items.length === 0) {
-    content = /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", color: "var(--rte-text-muted, #718096)", fontSize: 13 } }, "No results");
+    content = /* @__PURE__ */ jsx("div", { style: { padding: "8px 12px", color: "var(--rte-text-muted, #718096)", fontSize: 13 }, children: "No results" });
   } else if (renderList) {
     content = renderList({ items, selectedIndex, command: command2 });
   } else {
     content = items.map((item, index) => {
       const isSelected = index === selectedIndex;
-      return /* @__PURE__ */ React.createElement(
+      return /* @__PURE__ */ jsx(
         "button",
         {
-          key: item.id,
           type: "button",
           onClick: () => command2(item),
           onMouseEnter: () => setSelectedIndex(index),
@@ -26577,16 +26576,17 @@ const SuggestionDropdown = forwardRef((props, ref) => {
             fontFamily: "inherit",
             fontSize: "inherit",
             lineHeight: 1.4
-          }
+          },
+          children: renderItem ? renderItem(item, isSelected) : item.label
         },
-        renderItem ? renderItem(item, isSelected) : item.label
+        item.id
       );
     });
   }
   const portalTarget = typeof document !== "undefined" ? document.body : null;
   if (!portalTarget) return null;
   return createPortal(
-    /* @__PURE__ */ React.createElement("div", { className: "rte-suggestion-dropdown", style: style2 }, content),
+    /* @__PURE__ */ jsx("div", { className: "rte-suggestion-dropdown", style: style2, children: content }),
     portalTarget
   );
 });
@@ -27326,32 +27326,35 @@ function createTheme(vars) {
   return vars;
 }
 function Tooltip({ text, children }) {
-  return /* @__PURE__ */ React.createElement("span", { style: { position: "relative", display: "inline-flex" }, className: "tooltip-wrapper" }, children, /* @__PURE__ */ React.createElement(
-    "span",
-    {
-      style: {
-        position: "absolute",
-        bottom: "calc(100% + 6px)",
-        left: "50%",
-        transform: "translateX(-50%)",
-        background: "#1a202c",
-        color: "#fff",
-        fontSize: "11px",
-        padding: "3px 7px",
-        borderRadius: "4px",
-        whiteSpace: "nowrap",
-        pointerEvents: "none",
-        opacity: 0,
-        transition: "opacity 0.15s",
-        zIndex: 100
-      },
-      className: "tooltip-label"
-    },
-    text
-  ));
+  return /* @__PURE__ */ jsxs("span", { style: { position: "relative", display: "inline-flex" }, className: "tooltip-wrapper", children: [
+    children,
+    /* @__PURE__ */ jsx(
+      "span",
+      {
+        style: {
+          position: "absolute",
+          bottom: "calc(100% + 6px)",
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "#1a202c",
+          color: "#fff",
+          fontSize: "11px",
+          padding: "3px 7px",
+          borderRadius: "4px",
+          whiteSpace: "nowrap",
+          pointerEvents: "none",
+          opacity: 0,
+          transition: "opacity 0.15s",
+          zIndex: 100
+        },
+        className: "tooltip-label",
+        children: text
+      }
+    )
+  ] });
 }
 function ToolbarButton({ onClick, active, disabled, title, children }) {
-  return /* @__PURE__ */ React.createElement(Tooltip, { text: title }, /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ jsx(Tooltip, { text: title, children: /* @__PURE__ */ jsx(
     "button",
     {
       type: "button",
@@ -27378,13 +27381,13 @@ function ToolbarButton({ onClick, active, disabled, title, children }) {
       },
       onMouseLeave: (e) => {
         e.currentTarget.style.background = active ? "var(--rte-btn-active-bg)" : "transparent";
-      }
-    },
-    children
-  ));
+      },
+      children
+    }
+  ) });
 }
 function Divider() {
-  return /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ jsx(
     "span",
     {
       style: {
@@ -27409,7 +27412,7 @@ function LinkDialog({ onConfirm, onCancel, initialUrl = "" }) {
     if (e.key === "Enter") onConfirm(url);
     if (e.key === "Escape") onCancel();
   };
-  return /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       style: {
@@ -27423,75 +27426,80 @@ function LinkDialog({ onConfirm, onCancel, initialUrl = "" }) {
         boxShadow: "var(--rte-dropdown-shadow)",
         padding: "12px 14px",
         minWidth: 300
-      }
-    },
-    /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--rte-text-muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" } }, "Insert link"),
-    /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        ref: inputRef,
-        value: url,
-        onChange: (e) => setUrl(e.target.value),
-        onKeyDown: handleKeyDown2,
-        placeholder: "https://example.com",
-        style: {
-          width: "100%",
-          padding: "7px 10px",
-          border: "1px solid var(--rte-border)",
-          borderRadius: "var(--rte-radius-sm)",
-          fontSize: 13,
-          fontFamily: "var(--rte-font-family)",
-          outline: "none",
-          marginBottom: 10,
-          color: "var(--rte-text)",
-          background: "var(--rte-surface)",
-          transition: "border-color 0.15s"
-        },
-        onFocus: (e) => {
-          e.currentTarget.style.borderColor = "var(--rte-focus-border)";
-        },
-        onBlur: (e) => {
-          e.currentTarget.style.borderColor = "var(--rte-border)";
-        }
-      }
-    ),
-    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        onClick: onCancel,
-        style: {
-          padding: "5px 14px",
-          border: "1px solid var(--rte-border)",
-          borderRadius: "var(--rte-radius-sm)",
-          background: "var(--rte-surface)",
-          cursor: "pointer",
-          fontSize: 13,
-          fontFamily: "var(--rte-font-family)",
-          color: "var(--rte-text-muted)",
-          fontWeight: 500
-        }
       },
-      "Cancel"
-    ), /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        onClick: () => onConfirm(url),
-        style: {
-          padding: "5px 14px",
-          border: "none",
-          borderRadius: "var(--rte-radius-sm)",
-          background: "var(--rte-color-primary)",
-          color: "#fff",
-          cursor: "pointer",
-          fontSize: 13,
-          fontFamily: "var(--rte-font-family)",
-          fontWeight: 600
-        }
-      },
-      "Insert"
-    ))
+      children: [
+        /* @__PURE__ */ jsx("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--rte-text-muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }, children: "Insert link" }),
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            ref: inputRef,
+            value: url,
+            onChange: (e) => setUrl(e.target.value),
+            onKeyDown: handleKeyDown2,
+            placeholder: "https://example.com",
+            style: {
+              width: "100%",
+              padding: "7px 10px",
+              border: "1px solid var(--rte-border)",
+              borderRadius: "var(--rte-radius-sm)",
+              fontSize: 13,
+              fontFamily: "var(--rte-font-family)",
+              outline: "none",
+              marginBottom: 10,
+              color: "var(--rte-text)",
+              background: "var(--rte-surface)",
+              transition: "border-color 0.15s"
+            },
+            onFocus: (e) => {
+              e.currentTarget.style.borderColor = "var(--rte-focus-border)";
+            },
+            onBlur: (e) => {
+              e.currentTarget.style.borderColor = "var(--rte-border)";
+            }
+          }
+        ),
+        /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: 6, justifyContent: "flex-end" }, children: [
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: onCancel,
+              style: {
+                padding: "5px 14px",
+                border: "1px solid var(--rte-border)",
+                borderRadius: "var(--rte-radius-sm)",
+                background: "var(--rte-surface)",
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: "var(--rte-font-family)",
+                color: "var(--rte-text-muted)",
+                fontWeight: 500
+              },
+              children: "Cancel"
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: () => onConfirm(url),
+              style: {
+                padding: "5px 14px",
+                border: "none",
+                borderRadius: "var(--rte-radius-sm)",
+                background: "var(--rte-color-primary)",
+                color: "#fff",
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: "var(--rte-font-family)",
+                fontWeight: 600
+              },
+              children: "Insert"
+            }
+          )
+        ] })
+      ]
+    }
   );
 }
 function ImageDialog({ onConfirm, onCancel }) {
@@ -27517,7 +27525,7 @@ function ImageDialog({ onConfirm, onCancel }) {
     background: "var(--rte-surface)",
     transition: "border-color 0.15s"
   };
-  return /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       style: {
@@ -27531,80 +27539,85 @@ function ImageDialog({ onConfirm, onCancel }) {
         boxShadow: "var(--rte-dropdown-shadow)",
         padding: "12px 14px",
         minWidth: 300
-      }
-    },
-    /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--rte-text-muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" } }, "Insert image"),
-    /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        ref: inputRef,
-        value: url,
-        onChange: (e) => setUrl(e.target.value),
-        onKeyDown: handleKeyDown2,
-        placeholder: "Image URL (https://...)",
-        style: { ...inputStyle, marginBottom: 8 },
-        onFocus: (e) => {
-          e.currentTarget.style.borderColor = "var(--rte-focus-border)";
-        },
-        onBlur: (e) => {
-          e.currentTarget.style.borderColor = "var(--rte-border)";
-        }
-      }
-    ),
-    /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        value: alt,
-        onChange: (e) => setAlt(e.target.value),
-        onKeyDown: handleKeyDown2,
-        placeholder: "Alt text (optional)",
-        style: { ...inputStyle, marginBottom: 10 },
-        onFocus: (e) => {
-          e.currentTarget.style.borderColor = "var(--rte-focus-border)";
-        },
-        onBlur: (e) => {
-          e.currentTarget.style.borderColor = "var(--rte-border)";
-        }
-      }
-    ),
-    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        onClick: onCancel,
-        style: {
-          padding: "5px 14px",
-          border: "1px solid var(--rte-border)",
-          borderRadius: "var(--rte-radius-sm)",
-          background: "var(--rte-surface)",
-          cursor: "pointer",
-          fontSize: 13,
-          fontFamily: "var(--rte-font-family)",
-          color: "var(--rte-text-muted)",
-          fontWeight: 500
-        }
       },
-      "Cancel"
-    ), /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        onClick: () => url && onConfirm(url, alt),
-        disabled: !url,
-        style: {
-          padding: "5px 14px",
-          border: "none",
-          borderRadius: "var(--rte-radius-sm)",
-          background: url ? "var(--rte-color-primary)" : "var(--rte-btn-disabled-color)",
-          color: "#fff",
-          cursor: url ? "pointer" : "not-allowed",
-          fontSize: 13,
-          fontFamily: "var(--rte-font-family)",
-          fontWeight: 600
-        }
-      },
-      "Insert"
-    ))
+      children: [
+        /* @__PURE__ */ jsx("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--rte-text-muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }, children: "Insert image" }),
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            ref: inputRef,
+            value: url,
+            onChange: (e) => setUrl(e.target.value),
+            onKeyDown: handleKeyDown2,
+            placeholder: "Image URL (https://...)",
+            style: { ...inputStyle, marginBottom: 8 },
+            onFocus: (e) => {
+              e.currentTarget.style.borderColor = "var(--rte-focus-border)";
+            },
+            onBlur: (e) => {
+              e.currentTarget.style.borderColor = "var(--rte-border)";
+            }
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            value: alt,
+            onChange: (e) => setAlt(e.target.value),
+            onKeyDown: handleKeyDown2,
+            placeholder: "Alt text (optional)",
+            style: { ...inputStyle, marginBottom: 10 },
+            onFocus: (e) => {
+              e.currentTarget.style.borderColor = "var(--rte-focus-border)";
+            },
+            onBlur: (e) => {
+              e.currentTarget.style.borderColor = "var(--rte-border)";
+            }
+          }
+        ),
+        /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: 6, justifyContent: "flex-end" }, children: [
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: onCancel,
+              style: {
+                padding: "5px 14px",
+                border: "1px solid var(--rte-border)",
+                borderRadius: "var(--rte-radius-sm)",
+                background: "var(--rte-surface)",
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: "var(--rte-font-family)",
+                color: "var(--rte-text-muted)",
+                fontWeight: 500
+              },
+              children: "Cancel"
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: () => url && onConfirm(url, alt),
+              disabled: !url,
+              style: {
+                padding: "5px 14px",
+                border: "none",
+                borderRadius: "var(--rte-radius-sm)",
+                background: url ? "var(--rte-color-primary)" : "var(--rte-btn-disabled-color)",
+                color: "#fff",
+                cursor: url ? "pointer" : "not-allowed",
+                fontSize: 13,
+                fontFamily: "var(--rte-font-family)",
+                fontWeight: 600
+              },
+              children: "Insert"
+            }
+          )
+        ] })
+      ]
+    }
   );
 }
 function HeadingDropdown({ editor, onClose }) {
@@ -27615,7 +27628,7 @@ function HeadingDropdown({ editor, onClose }) {
     { label: "Heading 3", action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(), active: editor.isActive("heading", { level: 3 }) }
   ];
   const sizes = ["14px", "20px", "17px", "15px"];
-  return /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ jsx(
     "div",
     {
       style: {
@@ -27629,45 +27642,45 @@ function HeadingDropdown({ editor, onClose }) {
         boxShadow: "var(--rte-dropdown-shadow)",
         padding: "4px 0",
         minWidth: 180
-      }
-    },
-    options.map((opt, i) => /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        key: opt.label,
-        type: "button",
-        onClick: () => {
-          opt.action();
-          onClose();
-        },
-        style: {
-          display: "block",
-          width: "100%",
-          textAlign: "left",
-          padding: "7px 14px",
-          border: "none",
-          background: opt.active ? "var(--rte-btn-active-bg)" : "transparent",
-          cursor: "pointer",
-          fontSize: sizes[i],
-          fontFamily: "var(--rte-font-family)",
-          fontWeight: i > 0 ? 700 : 400,
-          color: opt.active ? "var(--rte-btn-active-color)" : "var(--rte-text)",
-          transition: "background 0.1s"
-        },
-        onMouseEnter: (e) => {
-          if (!opt.active) e.currentTarget.style.background = "var(--rte-btn-hover-bg)";
-        },
-        onMouseLeave: (e) => {
-          e.currentTarget.style.background = opt.active ? "var(--rte-btn-active-bg)" : "transparent";
-        }
       },
-      opt.label
-    ))
+      children: options.map((opt, i) => /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          onClick: () => {
+            opt.action();
+            onClose();
+          },
+          style: {
+            display: "block",
+            width: "100%",
+            textAlign: "left",
+            padding: "7px 14px",
+            border: "none",
+            background: opt.active ? "var(--rte-btn-active-bg)" : "transparent",
+            cursor: "pointer",
+            fontSize: sizes[i],
+            fontFamily: "var(--rte-font-family)",
+            fontWeight: i > 0 ? 700 : 400,
+            color: opt.active ? "var(--rte-btn-active-color)" : "var(--rte-text)",
+            transition: "background 0.1s"
+          },
+          onMouseEnter: (e) => {
+            if (!opt.active) e.currentTarget.style.background = "var(--rte-btn-hover-bg)";
+          },
+          onMouseLeave: (e) => {
+            e.currentTarget.style.background = opt.active ? "var(--rte-btn-active-bg)" : "transparent";
+          },
+          children: opt.label
+        },
+        opt.label
+      ))
+    }
   );
 }
 function CalloutDropdown({ editor, onClose }) {
   const activeType = CALLOUT_TYPES.find((ct) => editor.isActive("callout", { type: ct.key }));
-  return /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       style: {
@@ -27681,106 +27694,113 @@ function CalloutDropdown({ editor, onClose }) {
         boxShadow: "var(--rte-dropdown-shadow)",
         padding: "4px 0",
         minWidth: 180
-      }
-    },
-    CALLOUT_TYPES.map((ct) => {
-      const isActive2 = (activeType == null ? void 0 : activeType.key) === ct.key;
-      return /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          key: ct.key,
-          type: "button",
-          onClick: () => {
-            editor.chain().focus().toggleCallout(ct.key).run();
-            onClose();
-          },
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            width: "100%",
-            textAlign: "left",
-            padding: "8px 14px",
-            border: "none",
-            background: isActive2 ? "var(--rte-btn-active-bg)" : "transparent",
-            cursor: "pointer",
-            fontSize: 13,
-            fontFamily: "var(--rte-font-family)",
-            fontWeight: isActive2 ? 600 : 400,
-            color: isActive2 ? "var(--rte-btn-active-color)" : "var(--rte-text)",
-            transition: "background 0.1s"
-          },
-          onMouseEnter: (e) => {
-            if (!isActive2) e.currentTarget.style.background = "var(--rte-btn-hover-bg)";
-          },
-          onMouseLeave: (e) => {
-            e.currentTarget.style.background = isActive2 ? "var(--rte-btn-active-bg)" : "transparent";
-          }
-        },
-        /* @__PURE__ */ React.createElement(
-          "span",
-          {
-            style: {
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 22,
-              height: 22,
-              borderRadius: 4,
-              background: ct.color + "18",
-              fontSize: 13,
-              flexShrink: 0
-            }
-          },
-          ct.icon
-        ),
-        /* @__PURE__ */ React.createElement("span", null, ct.label),
-        /* @__PURE__ */ React.createElement(
-          "span",
-          {
-            style: {
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: ct.color,
-              marginLeft: "auto",
-              flexShrink: 0
-            }
-          }
-        )
-      );
-    }),
-    activeType && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { height: 1, background: "var(--rte-border-subtle)", margin: "4px 0" } }), /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        onClick: () => {
-          editor.chain().focus().unsetCallout().run();
-          onClose();
-        },
-        style: {
-          display: "block",
-          width: "100%",
-          textAlign: "left",
-          padding: "8px 14px",
-          border: "none",
-          background: "transparent",
-          cursor: "pointer",
-          fontSize: 13,
-          fontFamily: "var(--rte-font-family)",
-          fontWeight: 400,
-          color: "var(--rte-text-muted)",
-          transition: "background 0.1s"
-        },
-        onMouseEnter: (e) => {
-          e.currentTarget.style.background = "var(--rte-btn-hover-bg)";
-        },
-        onMouseLeave: (e) => {
-          e.currentTarget.style.background = "transparent";
-        }
       },
-      "Remove callout"
-    ))
+      children: [
+        CALLOUT_TYPES.map((ct) => {
+          const isActive2 = (activeType == null ? void 0 : activeType.key) === ct.key;
+          return /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => {
+                editor.chain().focus().toggleCallout(ct.key).run();
+                onClose();
+              },
+              style: {
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                width: "100%",
+                textAlign: "left",
+                padding: "8px 14px",
+                border: "none",
+                background: isActive2 ? "var(--rte-btn-active-bg)" : "transparent",
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: "var(--rte-font-family)",
+                fontWeight: isActive2 ? 600 : 400,
+                color: isActive2 ? "var(--rte-btn-active-color)" : "var(--rte-text)",
+                transition: "background 0.1s"
+              },
+              onMouseEnter: (e) => {
+                if (!isActive2) e.currentTarget.style.background = "var(--rte-btn-hover-bg)";
+              },
+              onMouseLeave: (e) => {
+                e.currentTarget.style.background = isActive2 ? "var(--rte-btn-active-bg)" : "transparent";
+              },
+              children: [
+                /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    style: {
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 22,
+                      height: 22,
+                      borderRadius: 4,
+                      background: ct.color + "18",
+                      fontSize: 13,
+                      flexShrink: 0
+                    },
+                    children: ct.icon
+                  }
+                ),
+                /* @__PURE__ */ jsx("span", { children: ct.label }),
+                /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    style: {
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: ct.color,
+                      marginLeft: "auto",
+                      flexShrink: 0
+                    }
+                  }
+                )
+              ]
+            },
+            ct.key
+          );
+        }),
+        activeType && /* @__PURE__ */ jsxs(Fragment$1, { children: [
+          /* @__PURE__ */ jsx("div", { style: { height: 1, background: "var(--rte-border-subtle)", margin: "4px 0" } }),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: () => {
+                editor.chain().focus().unsetCallout().run();
+                onClose();
+              },
+              style: {
+                display: "block",
+                width: "100%",
+                textAlign: "left",
+                padding: "8px 14px",
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: "var(--rte-font-family)",
+                fontWeight: 400,
+                color: "var(--rte-text-muted)",
+                transition: "background 0.1s"
+              },
+              onMouseEnter: (e) => {
+                e.currentTarget.style.background = "var(--rte-btn-hover-bg)";
+              },
+              onMouseLeave: (e) => {
+                e.currentTarget.style.background = "transparent";
+              },
+              children: "Remove callout"
+            }
+          )
+        ] })
+      ]
+    }
   );
 }
 const TABLE_GRID_COLS = 10;
@@ -27793,61 +27813,63 @@ function TableGridPicker({ editor, onClose }) {
     onClose();
   };
   const label = hover.rows && hover.cols ? `${hover.cols} × ${hover.rows}` : "Insert table";
-  return /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 10px" }, onMouseLeave: () => setHover({ rows: 0, cols: 0 }) }, /* @__PURE__ */ React.createElement(
-    "div",
-    {
-      style: {
-        display: "grid",
-        gridTemplateColumns: `repeat(${TABLE_GRID_COLS}, ${TABLE_GRID_CELL}px)`,
-        gridAutoRows: `${TABLE_GRID_CELL}px`,
-        gap: 3
+  return /* @__PURE__ */ jsxs("div", { style: { padding: "8px 10px" }, onMouseLeave: () => setHover({ rows: 0, cols: 0 }), children: [
+    /* @__PURE__ */ jsx(
+      "div",
+      {
+        style: {
+          display: "grid",
+          gridTemplateColumns: `repeat(${TABLE_GRID_COLS}, ${TABLE_GRID_CELL}px)`,
+          gridAutoRows: `${TABLE_GRID_CELL}px`,
+          gap: 3
+        },
+        children: Array.from({ length: TABLE_GRID_ROWS * TABLE_GRID_COLS }).map((_, i) => {
+          const r = Math.floor(i / TABLE_GRID_COLS) + 1;
+          const c = i % TABLE_GRID_COLS + 1;
+          const active = r <= hover.rows && c <= hover.cols;
+          return /* @__PURE__ */ jsx(
+            "div",
+            {
+              role: "button",
+              "aria-label": `${c} × ${r}`,
+              onMouseEnter: () => setHover({ rows: r, cols: c }),
+              onClick: () => commit(r, c),
+              style: {
+                width: TABLE_GRID_CELL,
+                height: TABLE_GRID_CELL,
+                borderRadius: 3,
+                border: `1px solid ${active ? "var(--rte-color-primary)" : "var(--rte-border)"}`,
+                background: active ? "var(--rte-btn-active-bg)" : "var(--rte-surface)",
+                cursor: "pointer",
+                transition: "background 0.05s, border-color 0.05s"
+              }
+            },
+            i
+          );
+        })
       }
-    },
-    Array.from({ length: TABLE_GRID_ROWS * TABLE_GRID_COLS }).map((_, i) => {
-      const r = Math.floor(i / TABLE_GRID_COLS) + 1;
-      const c = i % TABLE_GRID_COLS + 1;
-      const active = r <= hover.rows && c <= hover.cols;
-      return /* @__PURE__ */ React.createElement(
-        "div",
-        {
-          key: i,
-          role: "button",
-          "aria-label": `${c} × ${r}`,
-          onMouseEnter: () => setHover({ rows: r, cols: c }),
-          onClick: () => commit(r, c),
-          style: {
-            width: TABLE_GRID_CELL,
-            height: TABLE_GRID_CELL,
-            borderRadius: 3,
-            border: `1px solid ${active ? "var(--rte-color-primary)" : "var(--rte-border)"}`,
-            background: active ? "var(--rte-btn-active-bg)" : "var(--rte-surface)",
-            cursor: "pointer",
-            transition: "background 0.05s, border-color 0.05s"
-          }
-        }
-      );
-    })
-  ), /* @__PURE__ */ React.createElement(
-    "div",
-    {
-      style: {
-        marginTop: 8,
-        textAlign: "center",
-        fontSize: 12,
-        color: "var(--rte-text-muted)",
-        fontFamily: "var(--rte-font-family)",
-        minHeight: 16
+    ),
+    /* @__PURE__ */ jsx(
+      "div",
+      {
+        style: {
+          marginTop: 8,
+          textAlign: "center",
+          fontSize: 12,
+          color: "var(--rte-text-muted)",
+          fontFamily: "var(--rte-font-family)",
+          minHeight: 16
+        },
+        children: label
       }
-    },
-    label
-  ));
+    )
+  ] });
 }
 function TableDropdown({ editor, onClose }) {
   const inTable = editor.isActive("table");
-  const item = (label, action, disabled = false) => /* @__PURE__ */ React.createElement(
+  const item = (label, action, disabled = false) => /* @__PURE__ */ jsx(
     "button",
     {
-      key: label,
       type: "button",
       disabled,
       onClick: () => {
@@ -27872,11 +27894,12 @@ function TableDropdown({ editor, onClose }) {
       },
       onMouseLeave: (e) => {
         e.currentTarget.style.background = "transparent";
-      }
+      },
+      children: label
     },
     label
   );
-  return /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       style: {
@@ -27890,22 +27913,36 @@ function TableDropdown({ editor, onClose }) {
         boxShadow: "var(--rte-dropdown-shadow)",
         padding: "4px 0",
         minWidth: 200
-      }
-    },
-    !inTable && /* @__PURE__ */ React.createElement(TableGridPicker, { editor, onClose }),
-    inTable && /* @__PURE__ */ React.createElement(React.Fragment, null, item("Add column before", () => editor.chain().focus().addColumnBefore().run()), item("Add column after", () => editor.chain().focus().addColumnAfter().run()), item("Delete column", () => editor.chain().focus().deleteColumn().run()), /* @__PURE__ */ React.createElement("div", { style: { height: 1, background: "var(--rte-border-subtle)", margin: "4px 0" } }), item("Add row before", () => editor.chain().focus().addRowBefore().run()), item("Add row after", () => editor.chain().focus().addRowAfter().run()), item("Delete row", () => editor.chain().focus().deleteRow().run()), /* @__PURE__ */ React.createElement("div", { style: { height: 1, background: "var(--rte-border-subtle)", margin: "4px 0" } }), item("Toggle header row", () => editor.chain().focus().toggleHeaderRow().run()), item("Toggle header column", () => editor.chain().focus().toggleHeaderColumn().run()), item("Merge cells", () => editor.chain().focus().mergeCells().run()), item("Split cell", () => editor.chain().focus().splitCell().run()), /* @__PURE__ */ React.createElement("div", { style: { height: 1, background: "var(--rte-border-subtle)", margin: "4px 0" } }), item("Delete table", () => editor.chain().focus().deleteTable().run()))
+      },
+      children: [
+        !inTable && /* @__PURE__ */ jsx(TableGridPicker, { editor, onClose }),
+        inTable && /* @__PURE__ */ jsxs(Fragment$1, { children: [
+          item("Add column before", () => editor.chain().focus().addColumnBefore().run()),
+          item("Add column after", () => editor.chain().focus().addColumnAfter().run()),
+          item("Delete column", () => editor.chain().focus().deleteColumn().run()),
+          /* @__PURE__ */ jsx("div", { style: { height: 1, background: "var(--rte-border-subtle)", margin: "4px 0" } }),
+          item("Add row before", () => editor.chain().focus().addRowBefore().run()),
+          item("Add row after", () => editor.chain().focus().addRowAfter().run()),
+          item("Delete row", () => editor.chain().focus().deleteRow().run()),
+          /* @__PURE__ */ jsx("div", { style: { height: 1, background: "var(--rte-border-subtle)", margin: "4px 0" } }),
+          item("Toggle header row", () => editor.chain().focus().toggleHeaderRow().run()),
+          item("Toggle header column", () => editor.chain().focus().toggleHeaderColumn().run()),
+          item("Merge cells", () => editor.chain().focus().mergeCells().run()),
+          item("Split cell", () => editor.chain().focus().splitCell().run()),
+          /* @__PURE__ */ jsx("div", { style: { height: 1, background: "var(--rte-border-subtle)", margin: "4px 0" } }),
+          item("Delete table", () => editor.chain().focus().deleteTable().run())
+        ] })
+      ]
+    }
   );
 }
-function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen, onImageUpload }) {
+function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen, onImageUpload, fileInputRef, uploadError, onFileSelect }) {
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showCalloutMenu, setShowCalloutMenu] = useState(false);
   const [showTableMenu, setShowTableMenu] = useState(false);
   const toolbarRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
   const closeAll = () => {
     setShowLinkDialog(false);
     setShowImageDialog(false);
@@ -27927,7 +27964,7 @@ function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen, onImage
     if (editor.isActive("heading", { level: 1 })) return "H1";
     if (editor.isActive("heading", { level: 2 })) return "H2";
     if (editor.isActive("heading", { level: 3 })) return "H3";
-    return /* @__PURE__ */ React.createElement(Type, { size: 13 });
+    return /* @__PURE__ */ jsx(Type, { size: 13 });
   };
   const handleLinkInsert = (url) => {
     if (!url) return;
@@ -27943,203 +27980,213 @@ function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen, onImage
     editor.chain().focus().setImage({ src: url, alt: alt || "" }).run();
     setShowImageDialog(false);
   };
-  const handleImageUploadStart = (file) => {
-    if (!onImageUpload) return Promise.reject(new Error("No upload handler"));
-    setUploading(true);
-    setUploadError(null);
-    return onImageUpload(file).then(({ url, attachmentId }) => {
-      setUploading(false);
-      editor.chain().focus().setImage({
-        src: url,
-        alt: file.name || ""
-      }).run();
-      if (attachmentId) {
-        const { state } = editor;
-        const { tr: tr2 } = state;
-        state.doc.descendants((node, pos) => {
-          if (node.type.name === "image" && node.attrs.src === url) {
-            tr2.setNodeAttribute(pos, "data-attachment-id", attachmentId);
-            return false;
-          }
-          return true;
-        });
-        if (tr2.steps.length > 0) editor.view.dispatch(tr2);
-      }
-    }).catch((err) => {
-      setUploading(false);
-      setUploadError((err == null ? void 0 : err.message) || "Image upload failed");
-      setTimeout(() => setUploadError(null), 5e3);
-      throw err;
-    });
-  };
-  const handleFileSelect = (e) => {
-    var _a;
-    const file = (_a = e.target.files) == null ? void 0 : _a[0];
-    if (!file) return;
-    handleImageUploadStart(file).catch(() => {
-    });
-    e.target.value = "";
-  };
   const currentLink = editor.getAttributes("link").href || "";
   const sections = [];
   let needsDivider = false;
   const addSection = (key, content) => {
     if (!groups[key]) return;
-    if (needsDivider) sections.push(/* @__PURE__ */ React.createElement(Divider, { key: `div-${key}` }));
+    if (needsDivider) sections.push(/* @__PURE__ */ jsx(Divider, {}, `div-${key}`));
     sections.push(content);
     needsDivider = true;
   };
-  addSection("headings", /* @__PURE__ */ React.createElement("div", { key: "headings", style: { position: "relative" } }, /* @__PURE__ */ React.createElement(Tooltip, { text: "Text style" }, /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      type: "button",
-      onClick: () => {
-        setShowHeadingMenu((v) => !v);
-        setShowLinkDialog(false);
-        setShowImageDialog(false);
-        setShowCalloutMenu(false);
-      },
-      style: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 3,
-        height: 28,
-        padding: "0 8px",
-        border: "1px solid var(--rte-border)",
-        borderRadius: "var(--rte-radius-sm)",
-        background: showHeadingMenu ? "var(--rte-btn-hover-bg)" : "var(--rte-surface)",
-        color: "var(--rte-text)",
-        cursor: "pointer",
-        fontSize: 12,
-        fontFamily: "var(--rte-font-family)",
-        fontWeight: 600,
-        minWidth: 52
+  addSection("headings", /* @__PURE__ */ jsxs("div", { style: { position: "relative" }, children: [
+    /* @__PURE__ */ jsx(Tooltip, { text: "Text style", children: /* @__PURE__ */ jsxs(
+      "button",
+      {
+        type: "button",
+        onClick: () => {
+          setShowHeadingMenu((v) => !v);
+          setShowLinkDialog(false);
+          setShowImageDialog(false);
+          setShowCalloutMenu(false);
+        },
+        style: {
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 3,
+          height: 28,
+          padding: "0 8px",
+          border: "1px solid var(--rte-border)",
+          borderRadius: "var(--rte-radius-sm)",
+          background: showHeadingMenu ? "var(--rte-btn-hover-bg)" : "var(--rte-surface)",
+          color: "var(--rte-text)",
+          cursor: "pointer",
+          fontSize: 12,
+          fontFamily: "var(--rte-font-family)",
+          fontWeight: 600,
+          minWidth: 52
+        },
+        children: [
+          getHeadingLabel(),
+          /* @__PURE__ */ jsx(ChevronDown, { size: 11 })
+        ]
       }
-    },
-    getHeadingLabel(),
-    /* @__PURE__ */ React.createElement(ChevronDown, { size: 11 })
-  )), showHeadingMenu && /* @__PURE__ */ React.createElement(HeadingDropdown, { editor, onClose: () => setShowHeadingMenu(false) })));
-  addSection("formatting", /* @__PURE__ */ React.createElement("span", { key: "formatting", style: { display: "inline-flex", gap: 2 } }, /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().toggleBold().run(), active: editor.isActive("bold"), title: "Bold (⌘B)" }, /* @__PURE__ */ React.createElement(Bold, { size: 13, strokeWidth: 2.5 })), /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().toggleItalic().run(), active: editor.isActive("italic"), title: "Italic (⌘I)" }, /* @__PURE__ */ React.createElement(Italic, { size: 13, strokeWidth: 2.5 })), /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().toggleUnderline().run(), active: editor.isActive("underline"), title: "Underline (⌘U)" }, /* @__PURE__ */ React.createElement(Underline, { size: 13, strokeWidth: 2.5 })), /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().toggleStrike().run(), active: editor.isActive("strike"), title: "Strikethrough" }, /* @__PURE__ */ React.createElement(Strikethrough, { size: 13, strokeWidth: 2.5 })), /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().toggleCode().run(), active: editor.isActive("code"), title: "Inline code" }, /* @__PURE__ */ React.createElement(Code, { size: 13, strokeWidth: 2.5 }))));
-  addSection("alignment", /* @__PURE__ */ React.createElement("span", { key: "alignment", style: { display: "inline-flex", gap: 2 } }, /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().setTextAlign("left").run(), active: editor.isActive({ textAlign: "left" }), title: "Align left" }, /* @__PURE__ */ React.createElement(TextAlignStart, { size: 13 })), /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().setTextAlign("center").run(), active: editor.isActive({ textAlign: "center" }), title: "Align center" }, /* @__PURE__ */ React.createElement(TextAlignCenter, { size: 13 })), /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().setTextAlign("right").run(), active: editor.isActive({ textAlign: "right" }), title: "Align right" }, /* @__PURE__ */ React.createElement(TextAlignEnd, { size: 13 }))));
-  addSection("lists", /* @__PURE__ */ React.createElement("span", { key: "lists", style: { display: "inline-flex", gap: 2 } }, /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().toggleBulletList().run(), active: editor.isActive("bulletList"), title: "Bullet list" }, /* @__PURE__ */ React.createElement(List, { size: 13 })), /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().toggleOrderedList().run(), active: editor.isActive("orderedList"), title: "Numbered list" }, /* @__PURE__ */ React.createElement(ListOrdered, { size: 13 })), /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().toggleTaskList().run(), active: editor.isActive("taskList"), title: "Task list" }, /* @__PURE__ */ React.createElement(ListChecks, { size: 13 }))));
-  addSection("blocks", /* @__PURE__ */ React.createElement("span", { key: "blocks", style: { display: "inline-flex", gap: 2 } }, /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().toggleBlockquote().run(), active: editor.isActive("blockquote"), title: "Blockquote" }, /* @__PURE__ */ React.createElement(Quote, { size: 13 })), /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().toggleCodeBlock().run(), active: editor.isActive("codeBlock"), title: "Code block" }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "monospace", fontSize: 11, fontWeight: 700, lineHeight: 1, color: "inherit" } }, "<>")), /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().setHorizontalRule().run(), title: "Horizontal rule" }, /* @__PURE__ */ React.createElement(Minus, { size: 13 }))));
-  addSection("callouts", /* @__PURE__ */ React.createElement("div", { key: "callouts", style: { position: "relative" } }, /* @__PURE__ */ React.createElement(Tooltip, { text: "Callout block" }, /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      type: "button",
-      onClick: () => {
-        setShowCalloutMenu((v) => !v);
-        setShowLinkDialog(false);
-        setShowImageDialog(false);
-        setShowHeadingMenu(false);
-      },
-      style: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 3,
-        height: 28,
-        padding: "0 8px",
-        border: "1px solid var(--rte-border)",
-        borderRadius: "var(--rte-radius-sm)",
-        background: showCalloutMenu || editor.isActive("callout") ? "var(--rte-btn-hover-bg)" : "var(--rte-surface)",
-        color: editor.isActive("callout") ? "var(--rte-btn-active-color)" : "var(--rte-text)",
-        cursor: "pointer",
-        fontSize: 12,
-        fontFamily: "var(--rte-font-family)",
-        fontWeight: 600,
-        minWidth: 36
+    ) }),
+    showHeadingMenu && /* @__PURE__ */ jsx(HeadingDropdown, { editor, onClose: () => setShowHeadingMenu(false) })
+  ] }, "headings"));
+  addSection("formatting", /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 2 }, children: [
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().toggleBold().run(), active: editor.isActive("bold"), title: "Bold (⌘B)", children: /* @__PURE__ */ jsx(Bold, { size: 13, strokeWidth: 2.5 }) }),
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().toggleItalic().run(), active: editor.isActive("italic"), title: "Italic (⌘I)", children: /* @__PURE__ */ jsx(Italic, { size: 13, strokeWidth: 2.5 }) }),
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().toggleUnderline().run(), active: editor.isActive("underline"), title: "Underline (⌘U)", children: /* @__PURE__ */ jsx(Underline, { size: 13, strokeWidth: 2.5 }) }),
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().toggleStrike().run(), active: editor.isActive("strike"), title: "Strikethrough", children: /* @__PURE__ */ jsx(Strikethrough, { size: 13, strokeWidth: 2.5 }) }),
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().toggleCode().run(), active: editor.isActive("code"), title: "Inline code", children: /* @__PURE__ */ jsx(Code, { size: 13, strokeWidth: 2.5 }) })
+  ] }, "formatting"));
+  addSection("alignment", /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 2 }, children: [
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().setTextAlign("left").run(), active: editor.isActive({ textAlign: "left" }), title: "Align left", children: /* @__PURE__ */ jsx(TextAlignStart, { size: 13 }) }),
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().setTextAlign("center").run(), active: editor.isActive({ textAlign: "center" }), title: "Align center", children: /* @__PURE__ */ jsx(TextAlignCenter, { size: 13 }) }),
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().setTextAlign("right").run(), active: editor.isActive({ textAlign: "right" }), title: "Align right", children: /* @__PURE__ */ jsx(TextAlignEnd, { size: 13 }) })
+  ] }, "alignment"));
+  addSection("lists", /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 2 }, children: [
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().toggleBulletList().run(), active: editor.isActive("bulletList"), title: "Bullet list", children: /* @__PURE__ */ jsx(List, { size: 13 }) }),
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().toggleOrderedList().run(), active: editor.isActive("orderedList"), title: "Numbered list", children: /* @__PURE__ */ jsx(ListOrdered, { size: 13 }) }),
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().toggleTaskList().run(), active: editor.isActive("taskList"), title: "Task list", children: /* @__PURE__ */ jsx(ListChecks, { size: 13 }) })
+  ] }, "lists"));
+  addSection("blocks", /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 2 }, children: [
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().toggleBlockquote().run(), active: editor.isActive("blockquote"), title: "Blockquote", children: /* @__PURE__ */ jsx(Quote, { size: 13 }) }),
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().toggleCodeBlock().run(), active: editor.isActive("codeBlock"), title: "Code block", children: /* @__PURE__ */ jsx("span", { style: { fontFamily: "monospace", fontSize: 11, fontWeight: 700, lineHeight: 1, color: "inherit" }, children: "<>" }) }),
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().setHorizontalRule().run(), title: "Horizontal rule", children: /* @__PURE__ */ jsx(Minus, { size: 13 }) })
+  ] }, "blocks"));
+  addSection("callouts", /* @__PURE__ */ jsxs("div", { style: { position: "relative" }, children: [
+    /* @__PURE__ */ jsx(Tooltip, { text: "Callout block", children: /* @__PURE__ */ jsxs(
+      "button",
+      {
+        type: "button",
+        onClick: () => {
+          setShowCalloutMenu((v) => !v);
+          setShowLinkDialog(false);
+          setShowImageDialog(false);
+          setShowHeadingMenu(false);
+        },
+        style: {
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 3,
+          height: 28,
+          padding: "0 8px",
+          border: "1px solid var(--rte-border)",
+          borderRadius: "var(--rte-radius-sm)",
+          background: showCalloutMenu || editor.isActive("callout") ? "var(--rte-btn-hover-bg)" : "var(--rte-surface)",
+          color: editor.isActive("callout") ? "var(--rte-btn-active-color)" : "var(--rte-text)",
+          cursor: "pointer",
+          fontSize: 12,
+          fontFamily: "var(--rte-font-family)",
+          fontWeight: 600,
+          minWidth: 36
+        },
+        children: [
+          /* @__PURE__ */ jsx(MessageSquareWarning, { size: 14 }),
+          /* @__PURE__ */ jsx(ChevronDown, { size: 11 })
+        ]
       }
-    },
-    /* @__PURE__ */ React.createElement(MessageSquareWarning, { size: 14 }),
-    /* @__PURE__ */ React.createElement(ChevronDown, { size: 11 })
-  )), showCalloutMenu && /* @__PURE__ */ React.createElement(CalloutDropdown, { editor, onClose: () => setShowCalloutMenu(false) })));
-  addSection("tables", /* @__PURE__ */ React.createElement("div", { key: "tables", style: { position: "relative" } }, /* @__PURE__ */ React.createElement(Tooltip, { text: "Table" }, /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      type: "button",
-      onClick: () => {
-        setShowTableMenu((v) => !v);
-        setShowLinkDialog(false);
-        setShowImageDialog(false);
-        setShowHeadingMenu(false);
-        setShowCalloutMenu(false);
-      },
-      style: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 3,
-        height: 28,
-        padding: "0 8px",
-        border: "1px solid var(--rte-border)",
-        borderRadius: "var(--rte-radius-sm)",
-        background: showTableMenu || editor.isActive("table") ? "var(--rte-btn-hover-bg)" : "var(--rte-surface)",
-        color: editor.isActive("table") ? "var(--rte-btn-active-color)" : "var(--rte-text)",
-        cursor: "pointer",
-        fontSize: 12,
-        fontFamily: "var(--rte-font-family)",
-        fontWeight: 600,
-        minWidth: 36
+    ) }),
+    showCalloutMenu && /* @__PURE__ */ jsx(CalloutDropdown, { editor, onClose: () => setShowCalloutMenu(false) })
+  ] }, "callouts"));
+  addSection("tables", /* @__PURE__ */ jsxs("div", { style: { position: "relative" }, children: [
+    /* @__PURE__ */ jsx(Tooltip, { text: "Table", children: /* @__PURE__ */ jsxs(
+      "button",
+      {
+        type: "button",
+        onClick: () => {
+          setShowTableMenu((v) => !v);
+          setShowLinkDialog(false);
+          setShowImageDialog(false);
+          setShowHeadingMenu(false);
+          setShowCalloutMenu(false);
+        },
+        style: {
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 3,
+          height: 28,
+          padding: "0 8px",
+          border: "1px solid var(--rte-border)",
+          borderRadius: "var(--rte-radius-sm)",
+          background: showTableMenu || editor.isActive("table") ? "var(--rte-btn-hover-bg)" : "var(--rte-surface)",
+          color: editor.isActive("table") ? "var(--rte-btn-active-color)" : "var(--rte-text)",
+          cursor: "pointer",
+          fontSize: 12,
+          fontFamily: "var(--rte-font-family)",
+          fontWeight: 600,
+          minWidth: 36
+        },
+        children: [
+          /* @__PURE__ */ jsx(Table, { size: 13 }),
+          /* @__PURE__ */ jsx(ChevronDown, { size: 11 })
+        ]
       }
-    },
-    /* @__PURE__ */ React.createElement(Table, { size: 13 }),
-    /* @__PURE__ */ React.createElement(ChevronDown, { size: 11 })
-  )), showTableMenu && /* @__PURE__ */ React.createElement(TableDropdown, { editor, onClose: () => setShowTableMenu(false) })));
-  addSection("media", /* @__PURE__ */ React.createElement("span", { key: "media", style: { display: "inline-flex", gap: 2 } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement(
-    ToolbarButton,
-    {
-      onClick: () => {
-        setShowLinkDialog((v) => !v);
-        setShowImageDialog(false);
-        setShowHeadingMenu(false);
-        setShowCalloutMenu(false);
-      },
-      active: editor.isActive("link") || showLinkDialog,
-      title: "Insert link"
-    },
-    /* @__PURE__ */ React.createElement(Link, { size: 13 })
-  ), showLinkDialog && /* @__PURE__ */ React.createElement(LinkDialog, { onConfirm: handleLinkInsert, onCancel: () => setShowLinkDialog(false), initialUrl: currentLink })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, onImageUpload ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("input", { ref: fileInputRef, type: "file", accept: "image/*", style: { display: "none" }, onChange: handleFileSelect }), /* @__PURE__ */ React.createElement(
-    ToolbarButton,
-    {
-      onClick: () => {
-        var _a;
-        return (_a = fileInputRef.current) == null ? void 0 : _a.click();
-      },
-      active: uploading,
-      disabled: uploading,
-      title: "Insert image from file"
-    },
-    uploading ? /* @__PURE__ */ React.createElement("span", { style: { display: "inline-block", width: 12, height: 12, border: "2px solid var(--rte-text-muted)", borderTopColor: "var(--rte-color-primary)", borderRadius: "50%", animation: "rte-spin 0.6s linear infinite" } }) : /* @__PURE__ */ React.createElement(Image, { size: 13 })
-  ), uploadError && /* @__PURE__ */ React.createElement("span", { style: { position: "absolute", top: "100%", left: 0, zIndex: 201, background: "var(--rte-surface)", border: "1px solid var(--rte-border)", borderRadius: "var(--rte-radius-sm)", padding: "4px 8px", fontSize: 11, color: "var(--rte-code-color)", whiteSpace: "nowrap", marginTop: 4 } }, uploadError)) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
-    ToolbarButton,
-    {
-      onClick: () => {
-        setShowImageDialog((v) => !v);
-        setShowLinkDialog(false);
-        setShowHeadingMenu(false);
-        setShowCalloutMenu(false);
-      },
-      active: showImageDialog,
-      title: "Insert image"
-    },
-    /* @__PURE__ */ React.createElement(Image, { size: 13 })
-  ), showImageDialog && /* @__PURE__ */ React.createElement(ImageDialog, { onConfirm: handleImageInsert, onCancel: () => setShowImageDialog(false) })))));
-  addSection("history", /* @__PURE__ */ React.createElement("span", { key: "history", style: { display: "inline-flex", gap: 2 } }, /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().undo().run(), disabled: !editor.can().undo(), title: "Undo (⌘Z)" }, /* @__PURE__ */ React.createElement(Undo, { size: 13 })), /* @__PURE__ */ React.createElement(ToolbarButton, { onClick: () => editor.chain().focus().redo().run(), disabled: !editor.can().redo(), title: "Redo (⌘⇧Z)" }, /* @__PURE__ */ React.createElement(Redo, { size: 13 }))));
+    ) }),
+    showTableMenu && /* @__PURE__ */ jsx(TableDropdown, { editor, onClose: () => setShowTableMenu(false) })
+  ] }, "tables"));
+  addSection("media", /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 2 }, children: [
+    /* @__PURE__ */ jsxs("div", { style: { position: "relative" }, children: [
+      /* @__PURE__ */ jsx(
+        ToolbarButton,
+        {
+          onClick: () => {
+            setShowLinkDialog((v) => !v);
+            setShowImageDialog(false);
+            setShowHeadingMenu(false);
+            setShowCalloutMenu(false);
+          },
+          active: editor.isActive("link") || showLinkDialog,
+          title: "Insert link",
+          children: /* @__PURE__ */ jsx(Link, { size: 13 })
+        }
+      ),
+      showLinkDialog && /* @__PURE__ */ jsx(LinkDialog, { onConfirm: handleLinkInsert, onCancel: () => setShowLinkDialog(false), initialUrl: currentLink })
+    ] }),
+    /* @__PURE__ */ jsx("div", { style: { position: "relative" }, children: onImageUpload ? /* @__PURE__ */ jsxs(Fragment$1, { children: [
+      /* @__PURE__ */ jsx("input", { ref: fileInputRef, type: "file", accept: "image/*", style: { display: "none" }, onChange: onFileSelect }),
+      /* @__PURE__ */ jsx(
+        ToolbarButton,
+        {
+          onClick: () => {
+            var _a;
+            return (_a = fileInputRef.current) == null ? void 0 : _a.click();
+          },
+          title: "Insert image from file",
+          children: /* @__PURE__ */ jsx(Image, { size: 13 })
+        }
+      ),
+      uploadError && /* @__PURE__ */ jsx("span", { style: { position: "absolute", top: "100%", left: 0, zIndex: 201, background: "var(--rte-surface)", border: "1px solid var(--rte-border)", borderRadius: "var(--rte-radius-sm)", padding: "4px 8px", fontSize: 11, color: "var(--rte-code-color)", whiteSpace: "nowrap", marginTop: 4 }, children: uploadError })
+    ] }) : /* @__PURE__ */ jsxs(Fragment$1, { children: [
+      /* @__PURE__ */ jsx(
+        ToolbarButton,
+        {
+          onClick: () => {
+            setShowImageDialog((v) => !v);
+            setShowLinkDialog(false);
+            setShowHeadingMenu(false);
+            setShowCalloutMenu(false);
+          },
+          active: showImageDialog,
+          title: "Insert image",
+          children: /* @__PURE__ */ jsx(Image, { size: 13 })
+        }
+      ),
+      showImageDialog && /* @__PURE__ */ jsx(ImageDialog, { onConfirm: handleImageInsert, onCancel: () => setShowImageDialog(false) })
+    ] }) })
+  ] }, "media"));
+  addSection("history", /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 2 }, children: [
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().undo().run(), disabled: !editor.can().undo(), title: "Undo (⌘Z)", children: /* @__PURE__ */ jsx(Undo, { size: 13 }) }),
+    /* @__PURE__ */ jsx(ToolbarButton, { onClick: () => editor.chain().focus().redo().run(), disabled: !editor.can().redo(), title: "Redo (⌘⇧Z)", children: /* @__PURE__ */ jsx(Redo, { size: 13 }) })
+  ] }, "history"));
   if (groups.fullscreen && onToggleFullscreen) {
-    if (needsDivider) sections.push(/* @__PURE__ */ React.createElement(Divider, { key: "div-fullscreen" }));
+    if (needsDivider) sections.push(/* @__PURE__ */ jsx(Divider, {}, "div-fullscreen"));
     sections.push(
-      /* @__PURE__ */ React.createElement("span", { key: "fullscreen", style: { display: "inline-flex", gap: 2, marginLeft: "auto" } }, /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ jsx("span", { style: { display: "inline-flex", gap: 2, marginLeft: "auto" }, children: /* @__PURE__ */ jsx(
         ToolbarButton,
         {
           onClick: onToggleFullscreen,
           active: fullscreen,
-          title: fullscreen ? "Exit fullscreen (Esc)" : "Fullscreen"
-        },
-        fullscreen ? /* @__PURE__ */ React.createElement(Minimize2, { size: 13 }) : /* @__PURE__ */ React.createElement(Maximize2, { size: 13 })
-      ))
+          title: fullscreen ? "Exit fullscreen (Esc)" : "Fullscreen",
+          children: fullscreen ? /* @__PURE__ */ jsx(Minimize2, { size: 13 }) : /* @__PURE__ */ jsx(Maximize2, { size: 13 })
+        }
+      ) }, "fullscreen")
     );
     needsDivider = false;
   }
-  return /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ jsx(
     "div",
     {
       ref: toolbarRef,
@@ -28154,9 +28201,9 @@ function Toolbar({ editor, groups, bare, fullscreen, onToggleFullscreen, onImage
         borderRadius: bare ? 0 : "calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px) 0 0",
         position: "relative",
         userSelect: "none"
-      }
-    },
-    sections
+      },
+      children: sections
+    }
   );
 }
 function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions, bare }) {
@@ -28164,7 +28211,7 @@ function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions, ba
   const text = editor.getText();
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
   const charCount = text.length;
-  return /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       style: {
@@ -28175,46 +28222,59 @@ function EditorFooter({ editor, onSubmit, onCancel, submitLabel, showActions, ba
         borderTop: "1px solid var(--rte-border-toolbar)",
         background: "var(--rte-surface-toolbar)",
         borderRadius: bare ? 0 : "0 0 calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px)"
-      }
-    },
-    /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--rte-text-muted)", fontFamily: "var(--rte-font-family)" } }, wordCount, " word", wordCount !== 1 ? "s" : "", " · ", charCount, " char", charCount !== 1 ? "s" : ""),
-    showActions && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, onCancel && /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        onClick: onCancel,
-        style: {
-          padding: "5px 14px",
-          border: "1px solid var(--rte-border)",
-          borderRadius: "var(--rte-radius-sm)",
-          background: "var(--rte-surface)",
-          cursor: "pointer",
-          fontSize: 13,
-          fontFamily: "var(--rte-font-family)",
-          color: "var(--rte-text-muted)",
-          fontWeight: 500
-        }
       },
-      "Cancel"
-    ), onSubmit && /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        onClick: () => onSubmit(editor.getHTML()),
-        style: {
-          padding: "5px 16px",
-          border: "none",
-          borderRadius: "var(--rte-radius-sm)",
-          background: "var(--rte-color-primary)",
-          color: "#fff",
-          cursor: "pointer",
-          fontSize: 13,
-          fontFamily: "var(--rte-font-family)",
-          fontWeight: 600
-        }
-      },
-      submitLabel || "Save"
-    ))
+      children: [
+        /* @__PURE__ */ jsxs("span", { style: { fontSize: 11, color: "var(--rte-text-muted)", fontFamily: "var(--rte-font-family)" }, children: [
+          wordCount,
+          " word",
+          wordCount !== 1 ? "s" : "",
+          " · ",
+          charCount,
+          " char",
+          charCount !== 1 ? "s" : ""
+        ] }),
+        showActions && /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: 6 }, children: [
+          onCancel && /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: onCancel,
+              style: {
+                padding: "5px 14px",
+                border: "1px solid var(--rte-border)",
+                borderRadius: "var(--rte-radius-sm)",
+                background: "var(--rte-surface)",
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: "var(--rte-font-family)",
+                color: "var(--rte-text-muted)",
+                fontWeight: 500
+              },
+              children: "Cancel"
+            }
+          ),
+          onSubmit && /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: () => onSubmit(editor.getHTML()),
+              style: {
+                padding: "5px 16px",
+                border: "none",
+                borderRadius: "var(--rte-radius-sm)",
+                background: "var(--rte-color-primary)",
+                color: "#fff",
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: "var(--rte-font-family)",
+                fontWeight: 600
+              },
+              children: submitLabel || "Save"
+            }
+          )
+        ] })
+      ]
+    }
   );
 }
 function PlainTextEditor({
@@ -28468,7 +28528,7 @@ ${indent}${nextMarker} ${task ? "[ ] " : ""}`);
     maxHeight: isInput ? void 0 : maxHeight === null || maxHeight === 0 ? void 0 : typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight
   };
   const fsStyle = fullscreen ? { position: "fixed", inset: 0, zIndex: 9999, borderRadius: 0, border: "none" } : null;
-  return /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       className: `rte-root editor-wrapper${fullscreen ? " rte-fullscreen" : ""} ${className}`.trim(),
@@ -28488,125 +28548,146 @@ ${indent}${nextMarker} ${task ? "[ ] " : ""}`);
         position: "relative",
         ...resolvedVars,
         ...fsStyle
-      }
-    },
-    enableFullscreen && /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        onClick: () => setFullscreen((v) => !v),
-        title: fullscreen ? "Exit fullscreen (Esc)" : "Fullscreen",
-        style: {
-          position: "absolute",
-          top: 6,
-          right: 6,
-          zIndex: 1,
-          width: 26,
-          height: 26,
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          border: "1px solid var(--rte-border)",
-          borderRadius: "var(--rte-radius-sm)",
-          background: "var(--rte-surface)",
-          color: "var(--rte-text-muted)",
-          cursor: "pointer",
-          padding: 0
-        }
       },
-      fullscreen ? /* @__PURE__ */ React.createElement(Minimize2, { size: 13 }) : /* @__PURE__ */ React.createElement(Maximize2, { size: 13 })
-    ),
-    previewMode === "split" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flex: "1 1 auto", minHeight: 0, alignItems: isInput ? "stretch" : void 0 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 50%", display: "flex", borderRight: "1px solid var(--rte-border-subtle)", minWidth: 0 } }, /* @__PURE__ */ React.createElement(
-      Field,
-      {
-        ref,
-        value,
-        onChange: handleChange,
-        onKeyDown: handleKeyDown2,
-        onPaste: handlePaste2,
-        placeholder,
-        rows: isInput ? void 0 : 6,
-        style: fieldStyle
-      }
-    )), /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        className: "rtp-content",
-        dangerouslySetInnerHTML: { __html: renderedHtml || '<span style="color:var(--rte-text-placeholder)">Preview</span>' },
-        style: previewPaneStyleSplit
-      }
-    )) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
-      Field,
-      {
-        ref,
-        value,
-        onChange: handleChange,
-        onKeyDown: handleKeyDown2,
-        onPaste: handlePaste2,
-        placeholder,
-        rows: isInput ? void 0 : 6,
-        style: fieldStyle
-      }
-    ), previewMode === "inline" && /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        className: "rtp-content",
-        dangerouslySetInnerHTML: { __html: renderedHtml || '<span style="color:var(--rte-text-placeholder)">Preview</span>' },
-        style: previewPaneStyleInline
-      }
-    )),
-    showActions && /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "7px 12px",
-          borderTop: "1px solid var(--rte-border-toolbar)",
-          background: "var(--rte-surface-toolbar)",
-          borderRadius: isBare ? 0 : "0 0 calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px)"
-        }
-      },
-      /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--rte-text-muted)", fontFamily: "var(--rte-font-family)" } }, wordCount, " word", wordCount !== 1 ? "s" : "", " · ", charCount, " char", charCount !== 1 ? "s" : ""),
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, onCancel && /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          type: "button",
-          onClick: onCancel,
-          style: {
-            padding: "5px 14px",
-            border: "1px solid var(--rte-border)",
-            borderRadius: "var(--rte-radius-sm)",
-            background: "var(--rte-surface)",
-            cursor: "pointer",
-            fontSize: 13,
-            fontFamily: "var(--rte-font-family)",
-            color: "var(--rte-text-muted)",
-            fontWeight: 500
+      children: [
+        enableFullscreen && /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => setFullscreen((v) => !v),
+            title: fullscreen ? "Exit fullscreen (Esc)" : "Fullscreen",
+            style: {
+              position: "absolute",
+              top: 6,
+              right: 6,
+              zIndex: 1,
+              width: 26,
+              height: 26,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "1px solid var(--rte-border)",
+              borderRadius: "var(--rte-radius-sm)",
+              background: "var(--rte-surface)",
+              color: "var(--rte-text-muted)",
+              cursor: "pointer",
+              padding: 0
+            },
+            children: fullscreen ? /* @__PURE__ */ jsx(Minimize2, { size: 13 }) : /* @__PURE__ */ jsx(Maximize2, { size: 13 })
           }
-        },
-        "Cancel"
-      ), onSubmit && /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          type: "button",
-          onClick: () => onSubmit(value),
-          style: {
-            padding: "5px 16px",
-            border: "none",
-            borderRadius: "var(--rte-radius-sm)",
-            background: "var(--rte-color-primary)",
-            color: "#fff",
-            cursor: "pointer",
-            fontSize: 13,
-            fontFamily: "var(--rte-font-family)",
-            fontWeight: 600
+        ),
+        previewMode === "split" ? /* @__PURE__ */ jsxs("div", { style: { display: "flex", flex: "1 1 auto", minHeight: 0, alignItems: isInput ? "stretch" : void 0 }, children: [
+          /* @__PURE__ */ jsx("div", { style: { flex: "1 1 50%", display: "flex", borderRight: "1px solid var(--rte-border-subtle)", minWidth: 0 }, children: /* @__PURE__ */ jsx(
+            Field,
+            {
+              ref,
+              value,
+              onChange: handleChange,
+              onKeyDown: handleKeyDown2,
+              onPaste: handlePaste2,
+              placeholder,
+              rows: isInput ? void 0 : 6,
+              style: fieldStyle
+            }
+          ) }),
+          /* @__PURE__ */ jsx(
+            "div",
+            {
+              className: "rtp-content",
+              dangerouslySetInnerHTML: { __html: renderedHtml || '<span style="color:var(--rte-text-placeholder)">Preview</span>' },
+              style: previewPaneStyleSplit
+            }
+          )
+        ] }) : /* @__PURE__ */ jsxs(Fragment$1, { children: [
+          /* @__PURE__ */ jsx(
+            Field,
+            {
+              ref,
+              value,
+              onChange: handleChange,
+              onKeyDown: handleKeyDown2,
+              onPaste: handlePaste2,
+              placeholder,
+              rows: isInput ? void 0 : 6,
+              style: fieldStyle
+            }
+          ),
+          previewMode === "inline" && /* @__PURE__ */ jsx(
+            "div",
+            {
+              className: "rtp-content",
+              dangerouslySetInnerHTML: { __html: renderedHtml || '<span style="color:var(--rte-text-placeholder)">Preview</span>' },
+              style: previewPaneStyleInline
+            }
+          )
+        ] }),
+        showActions && /* @__PURE__ */ jsxs(
+          "div",
+          {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "7px 12px",
+              borderTop: "1px solid var(--rte-border-toolbar)",
+              background: "var(--rte-surface-toolbar)",
+              borderRadius: isBare ? 0 : "0 0 calc(var(--rte-radius) - 1px) calc(var(--rte-radius) - 1px)"
+            },
+            children: [
+              /* @__PURE__ */ jsxs("span", { style: { fontSize: 11, color: "var(--rte-text-muted)", fontFamily: "var(--rte-font-family)" }, children: [
+                wordCount,
+                " word",
+                wordCount !== 1 ? "s" : "",
+                " · ",
+                charCount,
+                " char",
+                charCount !== 1 ? "s" : ""
+              ] }),
+              /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: 6 }, children: [
+                onCancel && /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: onCancel,
+                    style: {
+                      padding: "5px 14px",
+                      border: "1px solid var(--rte-border)",
+                      borderRadius: "var(--rte-radius-sm)",
+                      background: "var(--rte-surface)",
+                      cursor: "pointer",
+                      fontSize: 13,
+                      fontFamily: "var(--rte-font-family)",
+                      color: "var(--rte-text-muted)",
+                      fontWeight: 500
+                    },
+                    children: "Cancel"
+                  }
+                ),
+                onSubmit && /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => onSubmit(value),
+                    style: {
+                      padding: "5px 16px",
+                      border: "none",
+                      borderRadius: "var(--rte-radius-sm)",
+                      background: "var(--rte-color-primary)",
+                      color: "#fff",
+                      cursor: "pointer",
+                      fontSize: 13,
+                      fontFamily: "var(--rte-font-family)",
+                      fontWeight: 600
+                    },
+                    children: submitLabel || "Save"
+                  }
+                )
+              ] })
+            ]
           }
-        },
-        submitLabel || "Save"
-      ))
-    )
+        )
+      ]
+    }
   );
 }
 function RichTextEditor({
@@ -28636,7 +28717,7 @@ function RichTextEditor({
   const isBare = variant === "bare";
   if (format === "markdown") {
     const mdToolbar = { ...DEFAULT_TOOLBAR, ...toolbar };
-    return /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ jsx(
       PlainTextEditor,
       {
         initialContent,
@@ -28739,6 +28820,75 @@ function RichTextEditor({
     }
   });
   const [fullscreen, setFullscreen] = useState(false);
+  const fileInputRef = useRef(null);
+  const uploadErrorTimeoutRef = useRef(null);
+  const [uploadError, setUploadError] = useState(null);
+  useEffect(() => {
+    return () => {
+      if (uploadErrorTimeoutRef.current) {
+        clearTimeout(uploadErrorTimeoutRef.current);
+      }
+    };
+  }, []);
+  const handleImageUploadStart = (file) => {
+    if (!onImageUpload) return Promise.reject(new Error("No upload handler"));
+    setUploadError(null);
+    return onImageUpload(file).then(({ url }) => {
+      const filename = file.name || "image";
+      editor.chain().focus().setImage({ src: url, alt: filename }).insertContent(` <a href="${url}" target="_blank" rel="noopener noreferrer">${filename}</a>`).run();
+    }).catch((err) => {
+      setUploadError((err == null ? void 0 : err.message) || "Image upload failed");
+      if (uploadErrorTimeoutRef.current) {
+        clearTimeout(uploadErrorTimeoutRef.current);
+      }
+      uploadErrorTimeoutRef.current = setTimeout(() => setUploadError(null), 5e3);
+      throw err;
+    });
+  };
+  const handleFileSelect = (e) => {
+    var _a;
+    const file = (_a = e.target.files) == null ? void 0 : _a[0];
+    if (!file) return;
+    handleImageUploadStart(file).catch((err) => {
+      console.error("[brv-text-editor] Image upload failed:", err);
+    });
+    e.target.value = "";
+  };
+  const handleEditorPaste = (e) => {
+    var _a;
+    if (!onImageUpload) return;
+    const items = (_a = e.clipboardData) == null ? void 0 : _a.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (!file) {
+          console.warn("[brv-text-editor] Clipboard item has image MIME type but getAsFile() returned null");
+          continue;
+        }
+        e.preventDefault();
+        handleImageUploadStart(file).catch((err) => {
+          console.error("[brv-text-editor] Image upload failed:", err);
+        });
+        return;
+      }
+    }
+  };
+  const handleEditorDrop = (e) => {
+    var _a;
+    if (!onImageUpload) return;
+    const files = (_a = e.dataTransfer) == null ? void 0 : _a.files;
+    if (!files || files.length === 0) return;
+    const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (imageFiles.length === 0) return;
+    e.preventDefault();
+    imageFiles.reduce(
+      (chain, file) => chain.then(() => handleImageUploadStart(file).catch((err) => {
+        console.error("[brv-text-editor] Image upload failed:", err);
+      })),
+      Promise.resolve()
+    );
+  };
   useEffect(() => {
     if (!fullscreen) return;
     const onKey = (e) => {
@@ -28753,7 +28903,7 @@ function RichTextEditor({
     };
   }, [fullscreen]);
   const fsStyle = fullscreen ? { position: "fixed", inset: 0, zIndex: 9999, borderRadius: 0, border: "none", maxHeight: "none" } : null;
-  return /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       className: `rte-root editor-wrapper${fullscreen ? " rte-fullscreen" : ""} ${className}`.trim(),
@@ -28771,57 +28921,62 @@ function RichTextEditor({
         flexDirection: "column",
         ...resolvedVars,
         ...fsStyle
-      }
-    },
-    /* @__PURE__ */ React.createElement(
-      Toolbar,
-      {
-        editor,
-        groups: resolvedToolbar,
-        bare: isBare && !fullscreen,
-        fullscreen,
-        onToggleFullscreen: () => setFullscreen((v) => !v),
-        onImageUpload
-      }
-    ),
-    /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        className: "editor-content",
-        style: {
-          minHeight: fullscreen ? 0 : minHeight,
-          maxHeight: fullscreen ? "none" : maxHeight === null || maxHeight === 0 ? void 0 : typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
-          overflow: "auto",
-          cursor: "text",
-          flex: "1 1 auto"
-        },
-        onClick: () => editor == null ? void 0 : editor.commands.focus(),
-        onPaste: handleEditorPaste,
-        onDrop: handleEditorDrop,
-        onDragOver: (e) => {
-          var _a;
-          if (!onImageUpload) return;
-          const files = (_a = e.dataTransfer) == null ? void 0 : _a.files;
-          if (!files || files.length === 0) return;
-          if (Array.from(files).some((f) => f.type.startsWith("image/"))) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = "copy";
-          }
-        }
       },
-      /* @__PURE__ */ React.createElement(EditorContent, { editor, style: { height: "100%" } })
-    ),
-    /* @__PURE__ */ React.createElement(
-      EditorFooter,
-      {
-        editor,
-        onSubmit,
-        onCancel,
-        submitLabel,
-        showActions,
-        bare: isBare && !fullscreen
-      }
-    )
+      children: [
+        /* @__PURE__ */ jsx(
+          Toolbar,
+          {
+            editor,
+            groups: resolvedToolbar,
+            bare: isBare && !fullscreen,
+            fullscreen,
+            onToggleFullscreen: () => setFullscreen((v) => !v),
+            onImageUpload,
+            fileInputRef,
+            uploadError,
+            onFileSelect: handleFileSelect
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "div",
+          {
+            className: "editor-content",
+            style: {
+              minHeight: fullscreen ? 0 : minHeight,
+              maxHeight: fullscreen ? "none" : maxHeight === null || maxHeight === 0 ? void 0 : typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
+              overflow: "auto",
+              cursor: "text",
+              flex: "1 1 auto"
+            },
+            onClick: () => editor == null ? void 0 : editor.commands.focus(),
+            onPaste: handleEditorPaste,
+            onDrop: handleEditorDrop,
+            onDragOver: (e) => {
+              var _a;
+              if (!onImageUpload) return;
+              const files = (_a = e.dataTransfer) == null ? void 0 : _a.files;
+              if (!files || files.length === 0) return;
+              if (Array.from(files).some((f) => f.type.startsWith("image/"))) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "copy";
+              }
+            },
+            children: /* @__PURE__ */ jsx(EditorContent, { editor, style: { height: "100%" } })
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          EditorFooter,
+          {
+            editor,
+            onSubmit,
+            onCancel,
+            submitLabel,
+            showActions,
+            bare: isBare && !fullscreen
+          }
+        )
+      ]
+    }
   );
 }
 function EmojiReaction({ emoji: emoji2 }) {
@@ -28831,30 +28986,10 @@ function EmojiReaction({ emoji: emoji2 }) {
     setActive((v) => !v);
     setCount((c) => active ? c - 1 : c + 1);
   };
-  return /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      type: "button",
-      onClick: toggle,
-      style: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 4,
-        padding: "3px 9px",
-        borderRadius: 20,
-        border: `1px solid ${active ? "var(--rte-blockquote-border)" : "var(--rte-border)"}`,
-        background: active ? "var(--rte-color-primary-hover)" : "var(--rte-surface-toolbar)",
-        cursor: "pointer",
-        fontSize: 14,
-        fontFamily: "var(--rte-font-family)",
-        color: active ? "var(--rte-color-primary)" : "var(--rte-text-muted)",
-        fontWeight: active ? 600 : 400,
-        transition: "all 0.15s"
-      }
-    },
-    /* @__PURE__ */ React.createElement("span", null, emoji2),
-    count > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12 } }, count)
-  );
+  return /* @__PURE__ */ jsxs("button", { type: "button", onClick: toggle, style: { display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 9px", borderRadius: 20, border: `1px solid ${active ? "var(--rte-blockquote-border)" : "var(--rte-border)"}`, background: active ? "var(--rte-color-primary-hover)" : "var(--rte-surface-toolbar)", cursor: "pointer", fontSize: 14, fontFamily: "var(--rte-font-family)", color: active ? "var(--rte-color-primary)" : "var(--rte-text-muted)", fontWeight: active ? 600 : 400, transition: "all 0.15s" }, children: [
+    /* @__PURE__ */ jsx("span", { children: emoji2 }),
+    count > 0 && /* @__PURE__ */ jsx("span", { style: { fontSize: 12 }, children: count })
+  ] });
 }
 function RichTextPreview({
   html = "",
@@ -28865,12 +29000,26 @@ function RichTextPreview({
   reactions = ["👍", "❤️", "🎉", "🙌"],
   theme = "unleashteams",
   themeVars = {},
-  onSuggestionClick
+  onSuggestionClick,
+  onImageClick
 }) {
   const presetVars = RTE_THEMES[theme] ?? {};
   const resolvedVars = { ...presetVars, ...themeVars };
   const isBare = variant === "bare";
   const handleContentClick = (e) => {
+    var _a;
+    if (onImageClick) {
+      const link = e.target.closest("a");
+      const img = e.target.tagName === "IMG" ? e.target : link == null ? void 0 : link.querySelector("img");
+      const href = (link == null ? void 0 : link.getAttribute("href")) || (img == null ? void 0 : img.getAttribute("src"));
+      if (href && (img || link)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const alt = (img == null ? void 0 : img.getAttribute("alt")) || ((_a = link == null ? void 0 : link.textContent) == null ? void 0 : _a.trim()) || "";
+        onImageClick(href, alt);
+        return;
+      }
+    }
     if (!onSuggestionClick) return;
     const el = e.target.closest(".rte-suggestion");
     if (el) {
@@ -28883,50 +29032,29 @@ function RichTextPreview({
     }
   };
   const safeHtml = format === "markdown" ? markdownToHtml(markdown ?? html ?? "") : html ?? "";
-  return /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       className: "rte-root",
       "data-rte-theme": theme,
       "data-rte-variant": variant,
-      style: {
-        width: "100%",
-        ...isBare ? {} : {
-          maxWidth: 720,
-          marginTop: 20,
-          background: "var(--rte-surface)",
-          borderRadius: "var(--rte-radius-lg)",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)",
-          overflow: "hidden",
-          animation: "rtp-slideDown 0.22s ease",
-          border: "1px solid var(--rte-border)"
-        },
-        ...resolvedVars
-      }
-    },
-    /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        className: `rtp-content${onSuggestionClick ? " rtp-suggestions-clickable" : ""}`,
-        dangerouslySetInnerHTML: { __html: safeHtml },
-        onClick: handleContentClick,
-        style: { padding: isBare ? "0" : "14px 22px 20px" }
-      }
-    ),
-    showReactions && reactions.length > 0 && /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "10px 20px 14px",
-          borderTop: "1px solid var(--rte-border-toolbar)"
-        }
-      },
-      reactions.map((emoji2) => /* @__PURE__ */ React.createElement(EmojiReaction, { key: emoji2, emoji: emoji2 })),
-      /* @__PURE__ */ React.createElement("span", { style: { marginLeft: 4, fontSize: 12, color: "var(--rte-text-muted)", fontFamily: "var(--rte-font-family)" } }, "Add a reaction")
-    )
+      style: { width: "100%", ...isBare ? {} : { maxWidth: 720, marginTop: 20, background: "var(--rte-surface)", borderRadius: "var(--rte-radius-lg)", boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)", overflow: "hidden", animation: "rtp-slideDown 0.22s ease", border: "1px solid var(--rte-border)" }, ...resolvedVars },
+      children: [
+        /* @__PURE__ */ jsx(
+          "div",
+          {
+            className: `rtp-content${onSuggestionClick ? " rtp-suggestions-clickable" : ""}`,
+            dangerouslySetInnerHTML: { __html: safeHtml },
+            onClick: handleContentClick,
+            style: { padding: isBare ? "0" : "14px 22px 20px" }
+          }
+        ),
+        showReactions && reactions.length > 0 && /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: 6, padding: "10px 20px 14px", borderTop: "1px solid var(--rte-border-toolbar)" }, children: [
+          reactions.map((emoji2) => /* @__PURE__ */ jsx(EmojiReaction, { emoji: emoji2 }, emoji2)),
+          /* @__PURE__ */ jsx("span", { style: { marginLeft: 4, fontSize: 12, color: "var(--rte-text-muted)", fontFamily: "var(--rte-font-family)" }, children: "Add a reaction" })
+        ] })
+      ]
+    }
   );
 }
 export {
